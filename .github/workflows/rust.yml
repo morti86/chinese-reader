@@ -22,6 +22,7 @@ jobs:
       # Change this to match your binary name defined in Cargo.toml
       BINARY_NAME: cnreader
       RELEASE_VERSION: ${{ github.ref_name }}
+      EXTRA_FILES: "README.md LICENSE models/* app.toml dict.db"
 
     steps:
       - name: Checkout code
@@ -36,14 +37,36 @@ jobs:
       - name: Build Release
         run: cargo build --release --verbose
 
-      - name: Create Archive
-        # Windows runners have PowerShell built-in to zip files
+      - name: Prepare Release Folder
         shell: pwsh
         run: |
-          Compress-Archive -Path "target/release/${{ env.BINARY_NAME }}.exe" -DestinationPath "${{ env.BINARY_NAME }}-${{ env.RELEASE_VERSION }}-windows.zip"
+          # Create a folder to stage the release contents
+          New-Item -ItemType Directory -Force -Path "release-build"
+          
+          # Copy the compiled binary
+          Copy-Item "target/release/${{ env.BINARY_NAME }}.exe" -Destination "release-build/"
+          
+          # Copy extra files from the repo (ignoring errors if files don't exist)
+          $files = "${{ env.EXTRA_FILES }}".Split(' ')
+          foreach ($file in $files) {
+            if (Test-Path $file) {
+              Copy-Item $file -Destination "release-build/"
+              Write-Host "Copied $file"
+            } else {
+              Write-Host "Warning: $file not found, skipping..."
+            }
+          }
 
+          # Create the zip archive
+          $zipName = "release-${{ env.RELEASE_VERSION }}.zip"
+          Compress-Archive -Path "release-build/*" -DestinationPath $zipName
+          
+          Write-Host "Created $zipName"
+          
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
-          files: "${{ env.BINARY_NAME }}-${{ env.RELEASE_VERSION }}-windows.zip"
+          tag_name: ${{ env.RELEASE_VERSION }}
+          files: "release-${{ env.RELEASE_VERSION }}.zip"
           generate_release_notes: true
+          draft: ${{ github.event_name == 'workflow_dispatch' }}
