@@ -4,7 +4,13 @@ on:
   push:
     tags:
       - 'v*' # Triggers on tags like v1.0, v1.2.3, etc.
-
+  workflow_dispatch: # Allows manual triggering
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.0.1 or dev-build)'
+        required: false
+        default: 'dev-manual'
+        
 permissions:
   contents: write # Required to create a GitHub Release and upload assets
 
