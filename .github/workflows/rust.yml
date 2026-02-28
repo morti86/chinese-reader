@@ -1,0 +1,43 @@
+name: Release Windows Build
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on tags like v1.0, v1.2.3, etc.
+
+permissions:
+  contents: write # Required to create a GitHub Release and upload assets
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    env:
+      # Change this to match your binary name defined in Cargo.toml
+      BINARY_NAME: cnreader
+      RELEASE_VERSION: ${{ github.ref_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build Release
+        run: cargo build --release --verbose
+
+      - name: Create Archive
+        # Windows runners have PowerShell built-in to zip files
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "target/release/${{ env.BINARY_NAME }}.exe" -DestinationPath "${{ env.BINARY_NAME }}-${{ env.RELEASE_VERSION }}-windows.zip"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: "${{ env.BINARY_NAME }}-${{ env.RELEASE_VERSION }}-windows.zip"
+          generate_release_notes: true
