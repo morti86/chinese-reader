@@ -1,5 +1,6 @@
 # chinese-reader
 An app that helps you learn Chinese by reading with the help of AI.
+Depending on a system, it might require to install ONNX Runtime.
 
 ## OCR Model
 
