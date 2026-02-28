@@ -5,7 +5,7 @@ use wl_clipboard_rs::paste::{get_contents, ClipboardType, MimeType, Seat};
 use clipboard_win::{formats, get_clipboard};
 use std::io::Read;
 use rand::prelude::*;
-use crate::{config::Provider, error::ReaderResult};
+use crate::config::Provider;
 use tendril::StrTendril;
 
 #[macro_export]
@@ -138,6 +138,7 @@ pub fn get_image() -> Vec<u8> {
     vec![]
 }
 
+/*
 pub fn get_text() -> ReaderResult<String> {
     let c = get_contents(ClipboardType::Regular, Seat::Unspecified, MimeType::Text);
     let mut content = vec![];
@@ -146,7 +147,7 @@ pub fn get_text() -> ReaderResult<String> {
         return Ok(String::from_utf8(content)?)
     }
     Ok(String::new())
-}
+}*/
 
 pub fn random_name() -> String {
     let mut rng = rand::rng();
@@ -239,7 +240,7 @@ pub fn open_link(url: &str) {
                                CString::new(url.replace("\n", "%0A")).unwrap().as_ptr(),
                                ptr::null(),
                                ptr::null(),
-                               winapi::SW_SHOWNORMAL);
+                               winapi::um::winuser::SW_SHOWNORMAL);
     }
 }
 

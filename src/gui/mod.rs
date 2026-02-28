@@ -909,7 +909,7 @@ impl App {
                     }
                     
                     #[cfg(target_os = "windows")]
-                    utils::open_link(e.to_string().as_str());
+                    crate::utils::open_link(e.to_string().as_str());
                     return iced::clipboard::write(e.to_string());
                 }
             }
