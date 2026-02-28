@@ -240,7 +240,7 @@ pub fn open_link(url: &str) {
                                CString::new(url.replace("\n", "%0A")).unwrap().as_ptr(),
                                ptr::null(),
                                ptr::null(),
-                               winapi::um::winuser::SW_SHOWNORMAL);
+                               1);
     }
 }
 
