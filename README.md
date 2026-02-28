@@ -35,3 +35,16 @@ The functions available:
 ## Notes
 
 It allows you to save notes so you can go back to them and review later. Can also add the dictionary or AI output to notes.
+
+## Usage
+
+<img width="716" height="155" alt="image" src="https://github.com/user-attachments/assets/76db5143-457d-4b99-b39c-4d7119ad748a" />
+Here pick the third button to manage texts in a database.
+
+<img width="716" height="155" alt="image" src="https://github.com/user-attachments/assets/ccffcf21-f6d0-4b4f-8768-79b17ae3e586" />
+Here you can:
+- select one of the texts in the base and click the first button to load it
+- delete selected text
+- add a new text (it will ask you to provide the name), saving the contents that are in the main window
+- cancel
+
