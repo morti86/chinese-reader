@@ -1,6 +1,6 @@
 [package]
 name = "cnreader"
-version = "1.0.0"
+version = "1.0.5"
 edition = "2024"
 
 [dependencies]
@@ -64,7 +64,7 @@ depends = "$auto, libssl3, libc6"
 maintainer = "Morti <you@example.com>"
 
 # Optional: Copyright file path
-copyright-file = "LICENSE"
+copyright = "LICENSE"
 
 # Optional: Assets (if you need to install config files or systemd services)
 # assets = [
