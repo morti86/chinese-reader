@@ -22,7 +22,7 @@ jobs:
       # Change this to match your binary name defined in Cargo.toml
       BINARY_NAME: cnreader
       RELEASE_VERSION: ${{ github.ref_name }}
-      EXTRA_FILES: "README.md LICENSE models/* app.toml dict.db"
+      EXTRA_FILES: "dict.db"
 
     steps:
       - name: Checkout code
@@ -69,4 +69,31 @@ jobs:
           tag_name: ${{ env.RELEASE_VERSION }}
           files: "release-${{ env.RELEASE_VERSION }}.zip"
           generate_release_notes: true
+          draft: ${{ github.event_name == 'workflow_dispatch' }}
+# --- UBUNTU DEB JOB ---
+  build-linux-deb:
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_VERSION: ${{ github.event.inputs.version || github.ref_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Build .deb Package
+        # cargo-deb automatically outputs to target/debian/
+        run: cargo deb --output target/debian/ --verbose
+
+      - name: Upload Debian Asset
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          # cargo-deb names the file: name_version_arch.deb
+          files: "target/debian/*.deb"
           draft: ${{ github.event_name == 'workflow_dispatch' }}
