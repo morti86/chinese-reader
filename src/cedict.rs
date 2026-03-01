@@ -102,7 +102,17 @@ pub struct Cedict {
 
 impl Cedict {
     pub fn new(fname: &str) -> Dupa<Self> {
-        let conn = Connection::open_with_flags(fname, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        let path = format!("/usr/share/cnreader/{}",fname);
+        let conn = match std::fs::exists(&path) {
+            Ok(true) => {
+                debug!("CEDICT found at: {}", path);
+                Connection::open_with_flags(&path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?
+            }
+            _ => {
+                debug!("CEDICT fallback: {}", fname);
+                Connection::open_with_flags(fname, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)?
+            }
+        };          
         let mut st = conn.prepare("SELECT * from Cedict")?;
         
         let mut data_t: BTreeMap<char, Vec<Entry>> = BTreeMap::new();

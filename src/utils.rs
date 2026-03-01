@@ -7,6 +7,45 @@ use std::io::Read;
 use rand::prelude::*;
 use crate::config::Provider;
 use tendril::StrTendril;
+use dirs;
+
+pub const APP_NAME: &str = "cnreader";
+pub const CONFIG_FILE: &str = "app.toml";
+
+pub fn find_config_path() -> Option<std::path::PathBuf> {
+    // 1. Check User Config Directory
+    if let Some(mut config_dir) = dirs::config_dir() {
+        config_dir.push(APP_NAME);
+        config_dir.push(CONFIG_FILE);
+        
+        if config_dir.exists() {
+            debug!("Found user config at {:?}", config_dir);
+            return Some(config_dir);
+        }
+    }
+
+    // 2. Check Executable Directory
+    if let Ok(exe_path) = env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let mut local_config = exe_dir.to_path_buf();
+            local_config.push(CONFIG_FILE);
+            debug!("Checking local: {:?}", local_config);
+            if local_config.exists() {
+                debug!("Local config");
+                return Some(local_config);
+            }
+        }
+    }
+
+    None
+}
+
+#[macro_export]
+macro_rules! modal {
+    ($err:expr) => {
+        iced::Task::done(Message::ShowModal($err.to_string()))
+    };
+}
 
 #[macro_export]
 macro_rules! make_enum {

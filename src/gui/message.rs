@@ -49,8 +49,6 @@ pub enum Message {
     AiModelChange(String),
     AiKeyChange(String),
     AiRoleChanged(String),
-    AiNdimsChanged(String),
-    AiMaxDocsChanged(String),
     AiProviderChange(crate::config::Provider),
     NewAi,
 
@@ -97,15 +95,25 @@ pub enum Message {
 
     UpdateProgress,
 
+    DlEvent(crate::ocr::dl::DlEvent),
+
+    #[cfg(feature = "scraper")]
     Scraper,
+    #[cfg(feature = "scraper")]
     StartScraper,
+    #[cfg(feature = "scraper")]
     StopScraper,
     #[cfg(feature = "scraper")]
     ScraperEvent(crate::scraper::ScraperEvent),
+    #[cfg(feature = "scraper")]
     ScraperSleepChanged(String),
+    #[cfg(feature = "scraper")]
     ScraperUrlChanged(String),
+    #[cfg(feature = "scraper")]
     ScraperFileChanged(String),
+    #[cfg(feature = "scraper")]
     ScraperSingle(bool),
+    #[cfg(feature = "scraper")]
     ScraperCurrentFile,
 
     Language(crate::config::Language),
@@ -118,12 +126,19 @@ pub enum Message {
 
     TextMode(super::TextMode),
 
+    #[cfg(feature = "scraper")]
     LP(String),
+    #[cfg(feature = "scraper")]
     TP(String),
+    #[cfg(feature = "scraper")]
     LX(String),
+    #[cfg(feature = "scraper")]
     LN(String),
+    #[cfg(feature = "scraper")]
     TN(String),
+    #[cfg(feature = "scraper")]
     TT(String),
+    #[cfg(feature = "scraper")]
     LU(String),
 
     #[cfg(feature = "scraper")]

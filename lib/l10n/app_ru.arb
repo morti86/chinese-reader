@@ -1,0 +1,342 @@
+{
+  "ocr": "OCR",
+  "@ocr": {
+    "description": "UI label: ocr"
+  },
+  "load_file": "Загрузить файл изображения",
+  "@load_file": {
+    "description": "UI label: load_file"
+  },
+  "clipboard": "Изображение из буфера обмена",
+  "@clipboard": {
+    "description": "UI label: clipboard"
+  },
+  "paste_here": "Вставить текст здесь",
+  "@paste_here": {
+    "description": "UI label: paste_here"
+  },
+  "load": "Загрузить",
+  "@load": {
+    "description": "UI label: load"
+  },
+  "save": "Сохранить",
+  "@save": {
+    "description": "UI label: save"
+  },
+  "ai_select": "Выбрать AI-чат",
+  "@ai_select": {
+    "description": "UI label: ai_select"
+  },
+  "ask_ai": "Спросить AI",
+  "@ask_ai": {
+    "description": "UI label: ask_ai"
+  },
+  "name": "Имя",
+  "@name": {
+    "description": "UI label: name"
+  },
+  "url": "URL",
+  "@url": {
+    "description": "UI label: url"
+  },
+  "provider": "Провайдер",
+  "@provider": {
+    "description": "UI label: provider"
+  },
+  "model": "Модель",
+  "@model": {
+    "description": "UI label: model"
+  },
+  "notes_placeholder": "Заметки здесь",
+  "@notes_placeholder": {
+    "description": "UI label: notes_placeholder"
+  },
+  "theme": "Тема",
+  "@theme": {
+    "description": "UI label: theme"
+  },
+  "cancel": "Отмена",
+  "@cancel": {
+    "description": "UI label: cancel"
+  },
+  "language": "Язык",
+  "@language": {
+    "description": "UI label: language"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "UI label: ok"
+  },
+  "mode": "Режим ",
+  "@mode": {
+    "description": "UI label: mode"
+  },
+  "settings_ai": "Настройки AI",
+  "@settings_ai": {
+    "description": "UI label: settings_ai"
+  },
+  "settings": "Настройки",
+  "@settings": {
+    "description": "UI label: settings"
+  },
+  "new": "Новый",
+  "@new": {
+    "description": "UI label: new"
+  },
+  "add_note": "Добавить заметку",
+  "@add_note": {
+    "description": "UI label: add_note"
+  },
+  "delete_note": "Удалить заметку",
+  "@delete_note": {
+    "description": "UI label: delete_note"
+  },
+  "image_status": "Статус изображения: ",
+  "@image_status": {
+    "description": "UI label: image_status"
+  },
+  "none": "Не загружено",
+  "@none": {
+    "description": "UI label: none"
+  },
+  "enter_model": "Введите название модели",
+  "@enter_model": {
+    "description": "UI label: enter_model"
+  },
+  "ai_key": "API ключ",
+  "@ai_key": {
+    "description": "UI label: ai_key"
+  },
+  "ai_role": "Роль",
+  "@ai_role": {
+    "description": "UI label: ai_role"
+  },
+  "load_text": "Загрузить текст",
+  "@load_text": {
+    "description": "UI label: load_text"
+  },
+  "select_text": "Выбрать текст",
+  "@select_text": {
+    "description": "UI label: select_text"
+  },
+  "save_text": "Сохранить текст",
+  "@save_text": {
+    "description": "UI label: save_text"
+  },
+  "text_name": "Название",
+  "@text_name": {
+    "description": "UI label: text_name"
+  },
+  "delete_text": "Удалить текст",
+  "@delete_text": {
+    "description": "UI label: delete_text"
+  },
+  "font_size": "Размер шрифта",
+  "@font_size": {
+    "description": "UI label: font_size"
+  },
+  "ai_preamble": "Преамбула",
+  "@ai_preamble": {
+    "description": "UI label: ai_preamble"
+  },
+  "to_notes": "В заметки",
+  "@to_notes": {
+    "description": "UI label: to_notes"
+  },
+  "copy": "Копировать",
+  "@copy": {
+    "description": "UI label: copy"
+  },
+  "add_text": "Добавить текст",
+  "@add_text": {
+    "description": "UI label: add_text"
+  },
+  "ocr_file": "OCR файл",
+  "@ocr_file": {
+    "description": "UI label: ocr_file"
+  },
+  "deepl_key": "Deepl API ключ",
+  "@deepl_key": {
+    "description": "UI label: deepl_key"
+  },
+  "eleven_key": "Elevenlabs API ключ",
+  "@eleven_key": {
+    "description": "UI label: eleven_key"
+  },
+  "simplified": "Упрощенный",
+  "@simplified": {
+    "description": "UI label: simplified"
+  },
+  "restart_needed": "Изменения вступят в силу после перезапуска",
+  "@restart_needed": {
+    "description": "UI label: restart_needed"
+  },
+  "cursor": "Курсор: строка {} символ {}",
+  "@cursor": {
+    "description": "UI label: cursor"
+  },
+  "deepl": "Deepl",
+  "@deepl": {
+    "description": "UI label: deepl"
+  },
+  "ai_meaning": "Значение",
+  "@ai_meaning": {
+    "description": "UI label: ai_meaning"
+  },
+  "ai_examples": "Примеры",
+  "@ai_examples": {
+    "description": "UI label: ai_examples"
+  },
+  "ai_explain": "Объяснить",
+  "@ai_explain": {
+    "description": "UI label: ai_explain"
+  },
+  "ai_grammar": "Грамматика",
+  "@ai_grammar": {
+    "description": "UI label: ai_grammar"
+  },
+  "load_img": "Изображение",
+  "@load_img": {
+    "description": "UI label: load_img"
+  },
+  "clear_img": "Очистить изображение",
+  "@clear_img": {
+    "description": "UI label: clear_img"
+  },
+  "save_prog": "Сохранить прогресс",
+  "@save_prog": {
+    "description": "UI label: save_prog"
+  },
+  "ndims": "Количество измерений",
+  "@ndims": {
+    "description": "UI label: ndims"
+  },
+  "max_docs": "Максимальное количество документов",
+  "@max_docs": {
+    "description": "UI label: max_docs"
+  },
+  "emb_mod": "Модель эмбеддинга",
+  "@emb_mod": {
+    "description": "UI label: emb_mod"
+  },
+  "appdata": "Файл базы данных текстов",
+  "@appdata": {
+    "description": "UI label: appdata"
+  },
+  "summary": "Сводка",
+  "@summary": {
+    "description": "UI label: summary"
+  },
+  "scraper": "Скрапер",
+  "@scraper": {
+    "description": "UI label: scraper"
+  },
+  "scraper_d": "Скрапер может попытаться получить книгу с таких сайтов, как ttkan.co. Просто вставьте URL главной страницы книги",
+  "@scraper_d": {
+    "description": "UI label: scraper_d"
+  },
+  "sc_file": "Имя файла для сохранения",
+  "@sc_file": {
+    "description": "UI label: sc_file"
+  },
+  "sc_c_min": "Глава с",
+  "@sc_c_min": {
+    "description": "UI label: sc_c_min"
+  },
+  "sc_c_max": "Глава по",
+  "@sc_c_max": {
+    "description": "UI label: sc_c_max"
+  },
+  "sc_sleep": "Интервал загрузки",
+  "@sc_sleep": {
+    "description": "UI label: sc_sleep"
+  },
+  "start": "Старт",
+  "@start": {
+    "description": "UI label: start"
+  },
+  "sc_url": "URL",
+  "@sc_url": {
+    "description": "UI label: sc_url"
+  },
+  "stop": "Стоп",
+  "@stop": {
+    "description": "UI label: stop"
+  },
+  "sc_single": "Одна страница",
+  "@sc_single": {
+    "description": "UI label: sc_single"
+  },
+  "sc_current": "Текущий файл",
+  "@sc_current": {
+    "description": "UI label: sc_current"
+  },
+  "e_pattern": "Шаблон",
+  "@e_pattern": {
+    "description": "UI label: e_pattern"
+  },
+  "e_chapters": "Главы",
+  "@e_chapters": {
+    "description": "UI label: e_chapters"
+  },
+  "e_type": "Тип",
+  "@e_type": {
+    "description": "UI label: e_type"
+  },
+  "e_tp": "Селектор заголовка",
+  "@e_tp": {
+    "description": "UI label: e_tp"
+  },
+  "e_lt": "Извлекатели ссылок и текста",
+  "@e_lt": {
+    "description": "UI label: e_lt"
+  },
+  "no_text": "Текст не загружен",
+  "@no_text": {
+    "description": "UI label: no_text"
+  },
+  "line": "Строка",
+  "@line": {
+    "description": "UI label: line"
+  },
+  "column": "Столбец",
+  "@column": {
+    "description": "UI label: column"
+  },
+  "text": "Текст",
+  "@text": {
+    "description": "UI label: text"
+  },
+  "sc_warn": "Скрапер - это инструмент для автоматической загрузки целых книг, разделенных на главы. Сайты не любят скраперов и склонны блокировать тех, кто их использует, поэтому используйте его с осторожностью. Уменьшение интервала делает скрапер быстрее, но также увеличивает вероятность блокировки.",
+  "@sc_warn": {
+    "description": "UI label: sc_warn"
+  },
+  "p_meaning": "Объяснить значение и использование",
+  "@p_meaning": {
+    "description": "UI label: p_meaning"
+  },
+  "p_explain": "Объяснить (с контекстом)",
+  "@p_explain": {
+    "description": "UI label: p_explain"
+  },
+  "prompt_meaning": "Объясните значение и использование слова {}",
+  "@prompt_meaning": {
+    "description": "AI prompt: meaning"
+  },
+  "prompt_examples": "Приведите примеры использования слова в предложениях",
+  "@prompt_examples": {
+    "description": "AI prompt: examples"
+  },
+  "prompt_explain": "Объясните значение {} в данном тексте",
+  "@prompt_explain": {
+    "description": "AI prompt: explain"
+  },
+  "prompt_grammar": "Объясните грамматическую структуру предложения {}",
+  "@prompt_grammar": {
+    "description": "AI prompt: grammar"
+  },
+  "prompt_summary": "Обобщите прикрепленный текст",
+  "@prompt_summary": {
+    "description": "AI prompt: summary"
+  }
+}

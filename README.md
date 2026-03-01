@@ -10,7 +10,7 @@ Download the following files from Hugging Face
 - https://huggingface.co/Kreuzberg/paddleocr-onnx-models/blob/main/PP-OCRv5_server_det_infer.onnx
 - https://huggingface.co/Kreuzberg/paddleocr-onnx-models/blob/main/rec/chinese/model.onnx
 
-And put them inside the models folder
+And put them inside the models folder in your HOME directory (C:\Users\{user name}\models or /home/{user name}/models)
 
 Either use the image button to load image from clipboard, or load an image file.
 
@@ -39,9 +39,11 @@ It allows you to save notes so you can go back to them and review later. Can als
 ## Usage
 
 <img width="716" height="155" alt="image" src="https://github.com/user-attachments/assets/76db5143-457d-4b99-b39c-4d7119ad748a" />
+
 Here pick the third button to manage texts in a database.
 
 <img width="716" height="155" alt="image" src="https://github.com/user-attachments/assets/ccffcf21-f6d0-4b4f-8768-79b17ae3e586" />
+
 Here you can:
 - select one of the texts in the base and click the first button to load it
 - delete selected text

@@ -1,0 +1,88 @@
+ocr: OCR
+load_file: Wczytaj plik z grafiką
+clipboard: Grafika ze schowka
+paste_here: Wklej tutaj
+load: Załaduj
+save: Zapisz
+ai_select: Wybierz chat AI
+ask_ai: Zapytaj AI
+name: Nazwa
+url: Url
+provider: Dostawca
+model: Model
+notes_placeholder: Notatki
+theme: Motyw
+cancel: Anuluj
+language: Język
+ok: OK
+mode: 'Mode '
+settings_ai: Ustawienia AI
+settings: Ustawienia
+new: New
+add_note: Dodaj notatkę
+delete_note: Usuń notatkę
+image_status: 'Status grafiki: '
+none: brak
+enter_model: Podaj nazwę modelu
+ai_key: Klucz API
+ai_role: Rola
+load_text: Załaduj tekst
+select_text: Wybierz tekst
+save_text: Zapisz tekst
+text_name: Nazwa
+delete_text: Usuń tekst
+font_size: Rozmiar tekstu
+ai_preamble: Preambuła AI
+to_notes: Do notatek
+copy: Kopiuj
+add_text: Dodaj tekst
+ocr_file: OCR Pliku
+deepl_key: Klucz API Deepl
+eleven_key: Klucz API Elevenlabs
+simplified: Na uproszczone
+restart_needed: Zmiany zostaną zastosowane po ponownym uruchomieniu
+cursor: 'Kursor: wiersz {} znak {}'
+deepl: Deepl
+ai_meaning: Znaczenie
+ai_examples: Przykłady
+ai_explain: Wyjaśnij
+ai_grammar: Gramatyka
+load_img: Obraz
+clear_img: Wyczyść
+save_prog: Zapisz postęp
+ndims: Liczba wymiarów
+max_docs: Maksymalna liczba dokumentów
+emb_mod: Embedding model
+appdata: Text database file
+summary: Podsumowanie
+scraper: Scraper
+scraper_d: Scrapper próbuje pobrać i zapisać książkę ze strony (np. ttkan.co)
+sc_file: Nazwa pliku do zapisu
+sc_c_min: Rozdział od
+sc_c_max: Rozdział do
+sc_sleep: Interwał pobierania
+start: Start
+sc_url: Url
+stop: Stop
+sc_single: Pojedyncza strona
+sc_current: Aktualny plik
+e_pattern: Wzorzec
+e_chapters: Rozdziały
+e_type: Typ
+e_tp: Selektor tytułu
+e_lt: Wydobywacz linków i tekstu
+no_text: Nie wczytano tekstu
+line: Wiersz
+column: Kolumna
+text: Tekst
+sc_warn: Scraper to narzędzie do automatycznego pobierania całych książek, które są
+  podzielone na rozdziały na stronach. Strony nie lubią scraperów i często banują
+  ich użytkowników, więc zachowaj ostrożność. Zmniejszenie interwału sprawi, że będzie
+  szybszy, ale zwiększa ryzyko bana.
+p_meaning: Wytłumacz znaczenie i użycie
+p_explain: Wyjaśnij (z kontekstem)
+prompt_meaning: 'Wyjaśnij znaczenie i użycie słowa: {}'
+prompt_examples: Podaj kilka przykładów użycia słowa
+prompt_explain: Wyjaśnij znaczenie {} w podanym tekście
+prompt_grammar: Wyjaśnij strukturę gramatyczną zdania {}
+prompt_summary: Napisz podsumowanie załączonego tekstu

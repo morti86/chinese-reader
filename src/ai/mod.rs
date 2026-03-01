@@ -54,6 +54,8 @@ pub fn connect() -> impl Sipper<Never, ChatEvent> {
 
                 }
                 Some(ChatCommand::Stop) => {
+                    tracing::info!("Stopped");
+                    continue;
                 }
                 None => {
                     warn!("Received None!!!");

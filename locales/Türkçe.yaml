@@ -1,0 +1,89 @@
+ocr: OCR
+load_file: Görüntü dosyası yükle
+clipboard: Panodan görüntü
+paste_here: Metni buraya yapıştır
+load: Yükle
+save: Kaydet
+ai_select: AI sohbeti seç
+ask_ai: AI'ya sor
+name: Ad
+url: URL
+provider: Sağlayıcı
+model: Model
+notes_placeholder: Notlar buraya
+theme: Tema
+cancel: İptal
+language: Dil
+ok: Tamam
+mode: 'Mod '
+settings_ai: AI ayarları
+settings: Ayarlar
+new: Yeni
+add_note: Not ekle
+delete_note: Notu sil
+image_status: 'Görüntü durumu: '
+none: Yüklenmedi
+enter_model: Model adını girin
+ai_key: API Anahtarı
+ai_role: Rol
+load_text: Metin yükle
+select_text: Metin seç
+save_text: Metni kaydet
+text_name: Ad
+delete_text: Metni sil
+font_size: Yazı tipi boyutu
+ai_preamble: Önsöz
+to_notes: Notlara
+copy: Kopyala
+add_text: Metin ekle
+ocr_file: OCR Dosyası
+deepl_key: Deepl API anahtarı
+eleven_key: Elevenlabs API anahtarı
+simplified: Basitleştirilmiş
+restart_needed: Değişiklikler yeniden başlatıldıktan sonra etkili olacak
+cursor: 'İmleç: satır {} karakter {}'
+deepl: Deepl
+ai_meaning: Anlam
+ai_examples: Örnekler
+ai_explain: Açıkla
+ai_grammar: Dilbilgisi
+load_img: Görüntü
+clear_img: Görüntüyü temizle
+save_prog: İlerlemeyi kaydet
+ndims: Boyut sayısı
+max_docs: Maksimum belge sayısı
+emb_mod: Gömme modeli
+appdata: Metin veritabanı dosyası
+summary: Özet
+scraper: Kazıyıcı
+scraper_d: Kazıyıcı, ttkan.co gibi sitelerden kitap almaya çalışabilir. Sadece kitabın
+  ana sayfasının URL'sini yapıştırın
+sc_file: Kaydedilecek dosya adı
+sc_c_min: Bölüm başlangıcı
+sc_c_max: Bölüm bitişi
+sc_sleep: İndirme aralığı
+start: Başlat
+sc_url: URL
+stop: Durdur
+sc_single: Tek sayfa
+sc_current: Geçerli dosya
+e_pattern: Desen
+e_chapters: Bölümler
+e_type: Tür
+e_tp: Başlık seçici
+e_lt: Bağlantı/metin çıkarıcıları
+no_text: Hiç metin yüklenmedi
+line: Satır
+column: Sütun
+text: Metin
+sc_warn: Kazıyıcı, bölümlere ayrılmış tüm kitapları otomatik olarak indirmek için
+  bir araçtır. Web siteleri kazıyıcıları sevmez ve onları kullananları yasaklama eğilimindedir,
+  bu nedenle dikkatli kullanın. Aralığı azaltmak kazıyıcıyı daha hızlı yapar, ancak
+  yasaklanma olasılığını da artırır.
+p_meaning: Anlamı ve kullanımını açıkla
+p_explain: Açıkla (bağlamla)
+prompt_meaning: '{} kelimesinin anlamını ve kullanımını açıkla'
+prompt_examples: Kelime ile cümlelerin kullanım örnekleri ver
+prompt_explain: Verilen metindeki {} anlamını açıkla
+prompt_grammar: '{} cümlesinin dilbilgisi yapısını açıkla'
+prompt_summary: Ekli metni özetle

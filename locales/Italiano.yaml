@@ -1,0 +1,89 @@
+ocr: OCR
+load_file: Carica file immagine
+clipboard: Immagine dagli appunti
+paste_here: Incolla testo qui
+load: Carica
+save: Salva
+ai_select: Seleziona chat AI
+ask_ai: Chiedi all'AI
+name: Nome
+url: URL
+provider: Fornitore
+model: Modello
+notes_placeholder: Note qui
+theme: Tema
+cancel: Annulla
+language: Lingua
+ok: OK
+mode: 'Modalità '
+settings_ai: Impostazioni AI
+settings: Impostazioni
+new: Nuovo
+add_note: Aggiungi nota
+delete_note: Elimina nota
+image_status: 'Stato immagine: '
+none: Non caricato
+enter_model: Inserisci nome modello
+ai_key: Chiave API
+ai_role: Ruolo
+load_text: Carica testo
+select_text: Seleziona testo
+save_text: Salva testo
+text_name: Nome
+delete_text: Elimina testo
+font_size: Dimensione carattere
+ai_preamble: Preambolo
+to_notes: Alle note
+copy: Copia
+add_text: Aggiungi testo
+ocr_file: File OCR
+deepl_key: Chiave API Deepl
+eleven_key: Chiave API Elevenlabs
+simplified: A semplificato
+restart_needed: Le modifiche avranno effetto dopo il riavvio
+cursor: 'Cursore: riga {} carattere {}'
+deepl: Deepl
+ai_meaning: Significato
+ai_examples: Esempi
+ai_explain: Spiega
+ai_grammar: Grammatica
+load_img: Immagine
+clear_img: Cancella immagine
+save_prog: Salva progresso
+ndims: Numero di dimensioni
+max_docs: Numero massimo di documenti
+emb_mod: Modello di embedding
+appdata: File database testi
+summary: Riepilogo
+scraper: Scraper
+scraper_d: Lo scraper può provare a recuperare un libro da siti come ttkan.co. Basta
+  incollare l'URL della pagina principale del libro
+sc_file: Nome file da salvare
+sc_c_min: Capitolo da
+sc_c_max: Capitolo a
+sc_sleep: Intervallo download
+start: Avvia
+sc_url: URL
+stop: Ferma
+sc_single: Pagina singola
+sc_current: File corrente
+e_pattern: Modello
+e_chapters: Capitoli
+e_type: Tipo
+e_tp: Selettore titolo
+e_lt: Estrattori link/testo
+no_text: Nessun testo è stato caricato
+line: Riga
+column: Colonna
+text: Testo
+sc_warn: Lo scraper è uno strumento per il download automatico di interi libri che
+  sono divisi in capitoli. I siti web non amano gli scraper e tendono a bannare chi
+  li utilizza, quindi usatelo con cautela. Diminuire l'intervallo rende lo scraper
+  più veloce, ma aumenta anche la probabilità di essere bannati.
+p_meaning: Spiega significato e utilizzo
+p_explain: Spiega (con contesto)
+prompt_meaning: Spiega il significato e l'uso della parola {}
+prompt_examples: Fornisci alcuni esempi di utilizzo di frasi con la parola
+prompt_explain: Spiega il significato di {} nel testo dato
+prompt_grammar: Spiega la struttura grammaticale della frase {}
+prompt_summary: Riassumi il testo allegato

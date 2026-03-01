@@ -4,9 +4,10 @@ pub mod message;
 use crate::ai::{ask_deepl, ChatCommand, ChatEvent};
 use crate::cedict::Cedict;
 use crate::error::ReaderError;
+use crate::ocr::dl::{DlCommand, DlEvent};
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType, ScraperCommand, ScraperEvent, TextExtractorType};
-use crate::{ai, make_enum, ocr, AGENT};
+use crate::{AGENT, ai, make_enum, modal, ocr};
 use crate::config::{AiChatConfig, Config};
 use iced::widget::text_editor::{Content, Position};
 use iced::{clipboard, Element, Subscription, Theme};
@@ -20,8 +21,9 @@ use rusqlite::Connection;
 use tokio::sync::RwLock;
 use tokio::sync::mpsc::Sender;
 use crate::textbase::{*, Document as Doc};
-use crate::utils::{get_image, str_to_op, url_for_provider};
+use crate::utils::{find_config_path, get_image, str_to_op, url_for_provider};
 use tracing::{debug, error, info, warn};
+use std::path::PathBuf;
 use std::sync::Arc;
 use message::Message;
 
@@ -34,8 +36,6 @@ pub enum TextMode {
     Md,
 }
 
-const CONF: &str = "./app.toml";
-
 #[derive(Clone, Debug)]
 pub enum AppState {
     Default,
@@ -46,6 +46,7 @@ pub enum AppState {
     #[cfg(feature = "scraper")]
     Scraper,
     Notes,
+    FileDl,
 }
 
 pub struct App {
@@ -71,6 +72,7 @@ pub struct App {
     ai_changed: bool,
 
     sender: Option<Sender<ChatCommand>>,
+    dl_sender: Option<Sender<DlCommand>>,
     #[cfg(feature = "scraper")]
     sc_sender: Option<Sender<ScraperCommand>>,
 
@@ -99,6 +101,11 @@ pub struct App {
 
     position: Position,
     dtn_append: bool,
+
+    models_dir: String,
+    
+    dl_dest: String,
+    dl_prog: f32,
 }
 
 impl Default for App {
@@ -109,7 +116,35 @@ impl Default for App {
 
 impl App {
     pub fn new() -> Self {
-        let conf: Config = toml::from_str( std::fs::read_to_string( CONF ).unwrap().as_str() ).unwrap();
+        let conf: Config = match find_config_path() {
+            Some(conf_path) => {
+                debug!("Config found at: {:?}", conf_path);
+                toml::from_str( std::fs::read_to_string( conf_path ).unwrap().as_str() ).unwrap()
+            }
+            None => {
+                let mut config_dir = dirs::config_dir()
+                    .unwrap_or(PathBuf::from("./"));
+                config_dir.push(crate::utils::APP_NAME);
+                if let Err(e) = std::fs::create_dir_all(&config_dir) {
+                    error!("Error creating config dir: {}", e);
+                }
+                config_dir.push(crate::utils::CONFIG_FILE);
+                debug!("Creating new config at {:?}", config_dir);
+                let conf = Config::default();
+                match toml::to_string(&conf) {
+                    Ok(s) => {
+                        if let Err(e) = std::fs::write(config_dir, s) {
+                            error!("Error writing to file {}", e);
+                        }
+                    }
+                    Err(e) => {
+                        error!("Error creating new config: {}", e);
+                    }
+                }
+                conf
+            }
+        };
+
         let key = conf.ai_chat.clone();
         debug!("Ai Chat key={}", key);
         let chat = conf.ai_chats.get(key.as_str()).unwrap();
@@ -124,6 +159,7 @@ impl App {
             error!("Error initializing agent: {}", e);
         }
 
+        rust_i18n::set_locale(&conf.window.lang().to_string());
         let appdata = conf.db.clone().unwrap_or("appdata.db".to_string());
 
         let doc_conn = crate::scraper::db::init_db(appdata).unwrap();
@@ -134,6 +170,12 @@ impl App {
                 vec![]
             }
         };
+        let models_dir = match dirs::home_dir() {
+            Some(pb) => format!("{}/models/", pb.to_string_lossy()),
+            None => conf.ocr_models.clone(),
+        };
+
+        debug!("OCR models dir {}", models_dir);
 
         Self {
             conf,
@@ -155,6 +197,7 @@ impl App {
             new_ai: None,
             chat_history: vec![],
             ai_changed: false,
+            dl_sender: None,
             sender: None,
             #[cfg(feature = "scraper")]
             sc_sender: None,
@@ -185,6 +228,11 @@ impl App {
 
             position: Position { line: 0, column: 0 },
             dtn_append: false,
+
+            models_dir,
+
+            dl_dest: String::new(),
+            dl_prog: 0.0,
         }
     }
 
@@ -199,8 +247,10 @@ impl App {
         let scr_sub = Subscription::run(crate::scraper::connect).map(Message::ScraperEvent);
         #[cfg(feature = "scraper")]
         let subs = vec![ai_chat_sub, scr_sub];
+
+        let dl_sub = Subscription::run(ocr::dl::connect).map(Message::DlEvent);
         #[cfg(not(feature = "scraper"))]
-        let subs = vec![ai_chat_sub];
+        let subs = vec![ai_chat_sub, dl_sub];
         Subscription::batch(subs)
     }
 
@@ -213,7 +263,7 @@ impl App {
                 settings::display_av(&self.conf.window, msg.as_str())
             }
             AppState::Settings => {
-                settings::settings(self, self.conf.get_labels())
+                settings::settings(self)
             }
             AppState::AiSettings => {
                 settings::ai_settings(self).into()
@@ -227,6 +277,9 @@ impl App {
             }
             AppState::Notes => {
                 settings::notes(self).into()
+            }
+            AppState::FileDl => {
+                settings::files_dl(self).into()
             }
         }
     }
@@ -243,7 +296,7 @@ impl App {
                 self.new_ai = None;
                 self.new_text = false;
                 self.sc_new = false;
-                match std::fs::read_to_string( CONF ) {
+                match std::fs::read_to_string( find_config_path().expect("No config file") ) {
                     Ok(r) => {
                         match toml::from_str(r.as_str()) {
                             Ok(e) => { self.conf = e; }
@@ -309,7 +362,7 @@ impl App {
             }
 
             Message::Ocr => {
-                let model_path = self.conf.ocr_models.clone();
+                let model_path = self.models_dir.clone();
                 let image_data = self.image_data.clone();
                 return iced::Task::perform(async move {
                     ocr::ocr_i(&model_path, image_data).await
@@ -363,7 +416,22 @@ impl App {
                         }
                     })
                 }
-
+            }
+            Message::DlEvent(ev) => {
+                match ev {
+                    DlEvent::Ready(s) => {
+                        self.dl_sender = Some(s);
+                    }
+                    DlEvent::Error(e) => {
+                        return modal!(e);
+                    }
+                    DlEvent::Progress(p) => {
+                        self.dl_prog = p;
+                    }
+                    DlEvent::End => {
+                        self.dl_prog = 0.0;
+                    }
+                }
             }
             Message::EditAction(a) => {
                 match a {
@@ -487,22 +555,6 @@ impl App {
                     c.model = String::new();
                     c.url = Some(url_for_provider(&p));
                     c.key = None;
-                    c.ndims = match p {
-                        crate::config::Provider::Gemini => Some(768),
-                        _ => None,
-                    };
-                    c.max_docs = match p {
-                        crate::config::Provider::Gemini => Some(1024),
-                        crate::config::Provider::Mistral => Some(1024),
-                        crate::config::Provider::Openai => Some(1024),
-                        _ => None,  
-                    };
-                    c.embedding_model = match p {
-                        crate::config::Provider::Mistral => Some(rig::providers::mistral::MISTRAL_EMBED.to_string()),
-                        crate::config::Provider::Gemini => Some(rig::providers::gemini::embedding::EMBEDDING_001.to_string()),
-                        crate::config::Provider::Openai => Some(rig::providers::openai::TEXT_EMBEDDING_3_LARGE.to_string()),
-                        _ => None,
-                    }
                 } else if let Some(c) = self.conf.get_ai_config_mut() {
                     c.provider = p;
                     c.model = String::new();
@@ -515,27 +567,6 @@ impl App {
                 self.conf.ai_role = r;
                 self.ai_changed = true;
             }
-            Message::AiNdimsChanged(x) => {
-                if let Ok(x) = x.parse::<usize>() {
-                    if let Some(r) = self.new_ai.as_mut() {
-                        r.ndims = Some(x);
-                    } else if let Some(r) = self.conf.get_ai_config_mut() {
-                        r.ndims = Some(x);
-                    }
-                    self.ai_changed = true;
-                }
-            }
-            Message::AiMaxDocsChanged(x) => {
-                if let Ok(x) = x.parse::<usize>() {
-                    if let Some(r) = self.new_ai.as_mut() {
-                        r.max_docs = Some(x);
-                    } else if let Some(r) = self.conf.get_ai_config_mut() {
-                        r.max_docs = Some(x);
-                    }
-                    self.ai_changed = true;
-                }
-            }
-
             Message::AiSettingsSave => {
                 if let Some(new_chat) = self.new_ai.as_ref() {
                     let new_key = crate::utils::random_name();
@@ -545,7 +576,7 @@ impl App {
                 match toml::to_string(&self.conf) {
                     Ok(s) => {
                         return iced::Task::perform(async move {
-                            tokio::fs::write(CONF, s).await
+                            tokio::fs::write(find_config_path().expect("No config file"), s).await
                         }, |r| {
                             match r {
                                 Ok(_) => Message::Close,
@@ -588,7 +619,7 @@ impl App {
                 match toml::to_string(&self.conf) {
                     Ok(s) => {
                         return iced::Task::perform(async move {
-                            tokio::fs::write(CONF, s).await
+                            tokio::fs::write(find_config_path().expect("No config file"), s).await
                         }, |r| {
                             match r {
                                 Ok(_) => Message::Close,
@@ -609,9 +640,6 @@ impl App {
                     key: None, 
                     url: Some(crate::utils::url_for_provider(&provider)), 
                     model: String::new(),
-                    ndims: None,
-                    max_docs: None,
-                    embedding_model: None,
                     provider });
 
             }
@@ -620,7 +648,7 @@ impl App {
             }
             Message::Language(lang) => {
                 self.conf.window.lang = Some(lang);
-                
+                rust_i18n::set_locale(&lang.to_string());
             }
             Message::Simplified => {
                 if let Some(cedict) = &self.cedict {
@@ -670,35 +698,35 @@ impl App {
             Message::PromptMeaning => {
                 self.answer_raw = String::new();
                 self.answer_text = markdown::Content::new();
-                let question = self.conf.get_prompts().meaning.clone();
+                let question = t!("prompt_meaning").to_string();
                 return self.do_prompt(question.as_str(), false);
             }
             Message::PromptExplain => {
                 self.answer_raw = String::new();
                 self.answer_text = markdown::Content::new();
 
-                let question = self.conf.get_prompts().explain.clone();
+                let question = t!("prompt_explain").to_string();
                 return self.do_prompt(question.as_str(), true);
             }
             Message::PromptSummary => {
                 self.answer_raw = String::new();
                 self.answer_text = markdown::Content::new();
 
-                let question = self.conf.get_prompts().summary.clone();
+                let question = t!("prompt_summary").to_string();
                 return self.do_prompt(question.as_str(), true);
             }
             Message::PromptGrammar => {
                 self.answer_raw = String::new();
                 self.answer_text = markdown::Content::new();
 
-                let question = self.conf.get_prompts().grammar.clone();
+                let question = t!("prompt_grammar").to_string();
                 return self.do_prompt(question.as_str(), false);
             }
             Message::PromptUsage => {
                 self.answer_raw = String::new();
                 self.answer_text = markdown::Content::new();
 
-                let question = self.conf.get_prompts().examples.clone();
+                let question = t!("prompt_usage").to_string();
                 return self.do_prompt(question.as_str(), false);
             }
             Message::DictionaryCopy => {
@@ -957,7 +985,9 @@ impl App {
             Message::NewText => {
                 self.text = Content::new();
                 self.loaded_text = crate::textbase::Document::default();
-                self.state = AppState::Default;
+                self.documents = get_documents(&self.doc_conn)
+                    .unwrap_or_default();
+                self.state = AppState::TextManage(TextOption::New);
             }
             Message::AppDataChanged(a) => {
                 self.conf.db = Some(a);
@@ -1162,7 +1192,6 @@ impl App {
             }
             Message::DbChange => {
                 let file_name = rfd::FileDialog::new()
-                    
                     .pick_file();
                 
                 if let Some(file_name) = &file_name {
@@ -1171,6 +1200,8 @@ impl App {
                             debug!("Setting new file: {:?}", file_name);
                             self.conf.db = file_name.to_str().map(|r| r.to_string());
                             self.doc_conn = doc_conn;
+                            self.documents = get_documents(&self.doc_conn)
+                                .unwrap_or_default();
                             self.temp_document = None;
                             self.text = Content::new();
                             self.text_md = markdown::Content::new();
@@ -1264,4 +1295,9 @@ impl App {
     }
 }
 
-
+fn get_path() -> String {
+    match dirs::config_dir() {
+        Some(pb) => format!("{}/cnreader/models", pb.to_str().unwrap()),
+        None => format!("./models"),
+    }
+}

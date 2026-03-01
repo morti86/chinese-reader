@@ -1,0 +1,85 @@
+ocr: OCR
+load_file: 画像ファイルを読み込む
+clipboard: クリップボードから画像
+paste_here: ここにテキストを貼り付け
+load: 読み込む
+save: 保存
+ai_select: AIチャットを選択
+ask_ai: AIに質問
+name: 名前
+url: URL
+provider: プロバイダー
+model: モデル
+notes_placeholder: ここにメモ
+theme: テーマ
+cancel: キャンセル
+language: 言語
+ok: OK
+mode: 'モード '
+settings_ai: AI設定
+settings: 設定
+new: 新規
+add_note: メモを追加
+delete_note: メモを削除
+image_status: '画像ステータス: '
+none: 未読み込み
+enter_model: モデル名を入力
+ai_key: APIキー
+ai_role: 役割
+load_text: テキストを読み込む
+select_text: テキストを選択
+save_text: テキストを保存
+text_name: 名前
+delete_text: テキストを削除
+font_size: フォントサイズ
+ai_preamble: 前文
+to_notes: メモへ
+copy: コピー
+add_text: テキストを追加
+ocr_file: OCRファイル
+deepl_key: DeepL APIキー
+eleven_key: Elevenlabs APIキー
+simplified: 簡体字へ
+restart_needed: 変更は再起動後に有効になります
+cursor: 'カーソル: 行 {} 文字 {}'
+deepl: DeepL
+ai_meaning: 意味
+ai_examples: 例
+ai_explain: 説明
+ai_grammar: 文法
+load_img: 画像
+clear_img: 画像をクリア
+save_prog: 進捗を保存
+ndims: 次元数
+max_docs: 最大ドキュメント数
+emb_mod: 埋め込みモデル
+appdata: テキストデータベースファイル
+summary: 概要
+scraper: スクレイパー
+scraper_d: スクレイパーはttkan.coなどのサイトから本を取得しようとします。本のメインページのURLを貼り付けてください
+sc_file: 保存するファイル名
+sc_c_min: 章 開始
+sc_c_max: 章 終了
+sc_sleep: ダウンロード間隔
+start: 開始
+sc_url: URL
+stop: 停止
+sc_single: 単一ページ
+sc_current: 現在のファイル
+e_pattern: パターン
+e_chapters: 章
+e_type: タイプ
+e_tp: タイトルセレクター
+e_lt: リンク/テキスト抽出器
+no_text: テキストが読み込まれていません
+line: 行
+column: 列
+text: テキスト
+sc_warn: スクレイパーは章に分かれた本全体を自動的にダウンロードするためのツールです。ウェブサイトはスクレイパーを好まず、使用するユーザーを禁止する傾向がありますので、注意して使用してください。間隔を短くするとスクレイパーは速くなりますが、禁止される可能性も高くなります。
+p_meaning: 意味と使い方を説明
+p_explain: 説明（文脈付き）
+prompt_meaning: 単語{}の意味と使い方を説明してください
+prompt_examples: 単語を使った文の使用例をいくつか挙げてください
+prompt_explain: 与えられたテキストにおける{}の意味を説明してください
+prompt_grammar: 文{}の文法構造を説明してください
+prompt_summary: 添付されたテキストを要約してください

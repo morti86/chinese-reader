@@ -1,0 +1,342 @@
+{
+  "ocr": "OCR",
+  "@ocr": {
+    "description": "UI label: ocr"
+  },
+  "load_file": "Bilddatei laden",
+  "@load_file": {
+    "description": "UI label: load_file"
+  },
+  "clipboard": "Bild aus Zwischenablage",
+  "@clipboard": {
+    "description": "UI label: clipboard"
+  },
+  "paste_here": "Hier einfügen",
+  "@paste_here": {
+    "description": "UI label: paste_here"
+  },
+  "load": "Laden",
+  "@load": {
+    "description": "UI label: load"
+  },
+  "save": "Speichern",
+  "@save": {
+    "description": "UI label: save"
+  },
+  "ai_select": "AI-Chat auswählen",
+  "@ai_select": {
+    "description": "UI label: ai_select"
+  },
+  "ask_ai": "AI fragen",
+  "@ask_ai": {
+    "description": "UI label: ask_ai"
+  },
+  "name": "Name",
+  "@name": {
+    "description": "UI label: name"
+  },
+  "url": "URL",
+  "@url": {
+    "description": "UI label: url"
+  },
+  "provider": "Anbieter",
+  "@provider": {
+    "description": "UI label: provider"
+  },
+  "model": "Modell",
+  "@model": {
+    "description": "UI label: model"
+  },
+  "notes_placeholder": "Notizen hier",
+  "@notes_placeholder": {
+    "description": "UI label: notes_placeholder"
+  },
+  "theme": "Thema",
+  "@theme": {
+    "description": "UI label: theme"
+  },
+  "cancel": "Abbrechen",
+  "@cancel": {
+    "description": "UI label: cancel"
+  },
+  "language": "Sprache",
+  "@language": {
+    "description": "UI label: language"
+  },
+  "ok": "OK",
+  "@ok": {
+    "description": "UI label: ok"
+  },
+  "mode": "Modus ",
+  "@mode": {
+    "description": "UI label: mode"
+  },
+  "settings_ai": "AI-Einstellungen",
+  "@settings_ai": {
+    "description": "UI label: settings_ai"
+  },
+  "settings": "Einstellungen",
+  "@settings": {
+    "description": "UI label: settings"
+  },
+  "new": "Neu",
+  "@new": {
+    "description": "UI label: new"
+  },
+  "add_note": "Notiz hinzufügen",
+  "@add_note": {
+    "description": "UI label: add_note"
+  },
+  "delete_note": "Notiz löschen",
+  "@delete_note": {
+    "description": "UI label: delete_note"
+  },
+  "image_status": "Bildstatus: ",
+  "@image_status": {
+    "description": "UI label: image_status"
+  },
+  "none": "Nicht geladen",
+  "@none": {
+    "description": "UI label: none"
+  },
+  "enter_model": "Modellnamen eingeben",
+  "@enter_model": {
+    "description": "UI label: enter_model"
+  },
+  "ai_key": "API-Schlüssel",
+  "@ai_key": {
+    "description": "UI label: ai_key"
+  },
+  "ai_role": "Rolle",
+  "@ai_role": {
+    "description": "UI label: ai_role"
+  },
+  "load_text": "Text laden",
+  "@load_text": {
+    "description": "UI label: load_text"
+  },
+  "select_text": "Text auswählen",
+  "@select_text": {
+    "description": "UI label: select_text"
+  },
+  "save_text": "Text speichern",
+  "@save_text": {
+    "description": "UI label: save_text"
+  },
+  "text_name": "Name",
+  "@text_name": {
+    "description": "UI label: text_name"
+  },
+  "delete_text": "Text löschen",
+  "@delete_text": {
+    "description": "UI label: delete_text"
+  },
+  "font_size": "Schriftgröße",
+  "@font_size": {
+    "description": "UI label: font_size"
+  },
+  "ai_preamble": "Präambel",
+  "@ai_preamble": {
+    "description": "UI label: ai_preamble"
+  },
+  "to_notes": "Zu Notizen",
+  "@to_notes": {
+    "description": "UI label: to_notes"
+  },
+  "copy": "Kopieren",
+  "@copy": {
+    "description": "UI label: copy"
+  },
+  "add_text": "Text hinzufügen",
+  "@add_text": {
+    "description": "UI label: add_text"
+  },
+  "ocr_file": "OCR-Datei",
+  "@ocr_file": {
+    "description": "UI label: ocr_file"
+  },
+  "deepl_key": "DeepL API-Schlüssel",
+  "@deepl_key": {
+    "description": "UI label: deepl_key"
+  },
+  "eleven_key": "Elevenlabs API-Schlüssel",
+  "@eleven_key": {
+    "description": "UI label: eleven_key"
+  },
+  "simplified": "Zu vereinfacht",
+  "@simplified": {
+    "description": "UI label: simplified"
+  },
+  "restart_needed": "Die Änderungen werden nach einem Neustart wirksam",
+  "@restart_needed": {
+    "description": "UI label: restart_needed"
+  },
+  "cursor": "Cursor: Zeile {} Zeichen {}",
+  "@cursor": {
+    "description": "UI label: cursor"
+  },
+  "deepl": "DeepL",
+  "@deepl": {
+    "description": "UI label: deepl"
+  },
+  "ai_meaning": "Bedeutung",
+  "@ai_meaning": {
+    "description": "UI label: ai_meaning"
+  },
+  "ai_examples": "Beispiele",
+  "@ai_examples": {
+    "description": "UI label: ai_examples"
+  },
+  "ai_explain": "Erklären",
+  "@ai_explain": {
+    "description": "UI label: ai_explain"
+  },
+  "ai_grammar": "Grammatik",
+  "@ai_grammar": {
+    "description": "UI label: ai_grammar"
+  },
+  "load_img": "Bild",
+  "@load_img": {
+    "description": "UI label: load_img"
+  },
+  "clear_img": "Bild löschen",
+  "@clear_img": {
+    "description": "UI label: clear_img"
+  },
+  "save_prog": "Fortschritt speichern",
+  "@save_prog": {
+    "description": "UI label: save_prog"
+  },
+  "ndims": "Anzahl der Dimensionen",
+  "@ndims": {
+    "description": "UI label: ndims"
+  },
+  "max_docs": "Maximale Anzahl Dokumente",
+  "@max_docs": {
+    "description": "UI label: max_docs"
+  },
+  "emb_mod": "Embedding-Modell",
+  "@emb_mod": {
+    "description": "UI label: emb_mod"
+  },
+  "appdata": "Textdatenbankdatei",
+  "@appdata": {
+    "description": "UI label: appdata"
+  },
+  "summary": "Zusammenfassung",
+  "@summary": {
+    "description": "UI label: summary"
+  },
+  "scraper": "Scraper",
+  "@scraper": {
+    "description": "UI label: scraper"
+  },
+  "scraper_d": "Scraper kann versuchen, ein Buch von Seiten wie ttkan.co abzurufen. Einfach die URL der Hauptseite des Buches einfügen",
+  "@scraper_d": {
+    "description": "UI label: scraper_d"
+  },
+  "sc_file": "Dateiname zum Speichern",
+  "@sc_file": {
+    "description": "UI label: sc_file"
+  },
+  "sc_c_min": "Kapitel von",
+  "@sc_c_min": {
+    "description": "UI label: sc_c_min"
+  },
+  "sc_c_max": "Kapitel bis",
+  "@sc_c_max": {
+    "description": "UI label: sc_c_max"
+  },
+  "sc_sleep": "Download-Intervall",
+  "@sc_sleep": {
+    "description": "UI label: sc_sleep"
+  },
+  "start": "Start",
+  "@start": {
+    "description": "UI label: start"
+  },
+  "sc_url": "URL",
+  "@sc_url": {
+    "description": "UI label: sc_url"
+  },
+  "stop": "Stopp",
+  "@stop": {
+    "description": "UI label: stop"
+  },
+  "sc_single": "Einzelseite",
+  "@sc_single": {
+    "description": "UI label: sc_single"
+  },
+  "sc_current": "Aktuelle Datei",
+  "@sc_current": {
+    "description": "UI label: sc_current"
+  },
+  "e_pattern": "Muster",
+  "@e_pattern": {
+    "description": "UI label: e_pattern"
+  },
+  "e_chapters": "Kapitel",
+  "@e_chapters": {
+    "description": "UI label: e_chapters"
+  },
+  "e_type": "Typ",
+  "@e_type": {
+    "description": "UI label: e_type"
+  },
+  "e_tp": "Titel-Selektor",
+  "@e_tp": {
+    "description": "UI label: e_tp"
+  },
+  "e_lt": "Link-/Text-Extraktor",
+  "@e_lt": {
+    "description": "UI label: e_lt"
+  },
+  "no_text": "Kein Text wurde geladen",
+  "@no_text": {
+    "description": "UI label: no_text"
+  },
+  "line": "Zeile",
+  "@line": {
+    "description": "UI label: line"
+  },
+  "column": "Spalte",
+  "@column": {
+    "description": "UI label: column"
+  },
+  "text": "Text",
+  "@text": {
+    "description": "UI label: text"
+  },
+  "sc_warn": "Scraper ist ein Werkzeug zum automatischen Herunterladen ganzer Bücher, die in Kapitel unterteilt sind. Websites mögen keine Scraper und neigen dazu, diejenigen zu sperren, die sie verwenden. Daher verwenden Sie es mit Vorsicht. Eine Verringerung des Intervalls macht den Scraper schneller, erhöht aber auch die Wahrscheinlichkeit, gesperrt zu werden.",
+  "@sc_warn": {
+    "description": "UI label: sc_warn"
+  },
+  "p_meaning": "Bedeutung und Verwendung erklären",
+  "@p_meaning": {
+    "description": "UI label: p_meaning"
+  },
+  "p_explain": "Erklären (mit Kontext)",
+  "@p_explain": {
+    "description": "UI label: p_explain"
+  },
+  "prompt_meaning": "Erklären Sie die Bedeutung und Verwendung des Wortes {}",
+  "@prompt_meaning": {
+    "description": "AI prompt: meaning"
+  },
+  "prompt_examples": "Geben Sie einige Anwendungsbeispiele von Sätzen mit dem Wort",
+  "@prompt_examples": {
+    "description": "AI prompt: examples"
+  },
+  "prompt_explain": "Erklären Sie die Bedeutung von {} im gegebenen Text",
+  "@prompt_explain": {
+    "description": "AI prompt: explain"
+  },
+  "prompt_grammar": "Erklären Sie die grammatikalische Struktur des Satzes {}",
+  "@prompt_grammar": {
+    "description": "AI prompt: grammar"
+  },
+  "prompt_summary": "Fassen Sie den angehängten Text zusammen",
+  "@prompt_summary": {
+    "description": "AI prompt: summary"
+  }
+}

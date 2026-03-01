@@ -33,6 +33,9 @@ async-trait = "0.1.89"
 downcast-rs = "2.0.2"
 sipper = "0.1.0"
 url = "2.5.7"
+rust-i18n = "3.1.5"
+dirs = "6.0.0"
+env = "1.0.1"
 
 [target.'cfg(target_family = "unix")'.dependencies]
 wl-clipboard-rs = "*"
@@ -44,3 +47,27 @@ shell32-sys = "0.1.2"
 
 [features]
 scraper = ["dep:scraper"]
+
+# Add this section for Debian packaging
+[package.metadata.deb]
+assets = [
+    # The binary itself
+    ["target/release/cnreader", "usr/bin/", "755"],
+    ["dict.db", "usr/share/cnreader/", "644"],
+]
+# The section below defines system-level dependencies
+depends = "$auto, libssl3, libc6"
+# $auto: Automatically detects libraries linked to your binary
+# libssl3, libc6: Example manual dependencies required by your app
+
+# Optional: Maintain a specific maintainer name
+maintainer = "Morti <you@example.com>"
+
+# Optional: Copyright file path
+copyright-file = "LICENSE"
+
+# Optional: Assets (if you need to install config files or systemd services)
+# assets = [
+#   ["target/release/my-app", "usr/bin/", "755"],
+#   ["config.toml", "etc/my-app/", "644"]
+# ]

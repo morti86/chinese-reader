@@ -1,0 +1,89 @@
+ocr: OCR
+load_file: Charger un fichier image
+clipboard: Image du presse-papiers
+paste_here: Coller le texte ici
+load: Charger
+save: Enregistrer
+ai_select: Sélectionner un chat IA
+ask_ai: Demander à l'IA
+name: Nom
+url: URL
+provider: Fournisseur
+model: Modèle
+notes_placeholder: Notes ici
+theme: Thème
+cancel: Annuler
+language: Langue
+ok: OK
+mode: 'Mode '
+settings_ai: Paramètres IA
+settings: Paramètres
+new: Nouveau
+add_note: Ajouter une note
+delete_note: Supprimer la note
+image_status: 'Statut de l''image : '
+none: Non chargé
+enter_model: Entrez le nom du modèle
+ai_key: Clé API
+ai_role: Rôle
+load_text: Charger le texte
+select_text: Sélectionner le texte
+save_text: Enregistrer le texte
+text_name: Nom
+delete_text: Supprimer le texte
+font_size: Taille de police
+ai_preamble: Préambule
+to_notes: Vers les notes
+copy: Copier
+add_text: Ajouter du texte
+ocr_file: Fichier OCR
+deepl_key: Clé API Deepl
+eleven_key: Clé API Elevenlabs
+simplified: Vers simplifié
+restart_needed: Les changements prendront effet après le redémarrage
+cursor: 'Curseur : ligne {} caractère {}'
+deepl: Deepl
+ai_meaning: Signification
+ai_examples: Exemples
+ai_explain: Expliquer
+ai_grammar: Grammaire
+load_img: Image
+clear_img: Effacer l'image
+save_prog: Enregistrer la progression
+ndims: Nombre de dimensions
+max_docs: Nombre maximum de documents
+emb_mod: Modèle d'embedding
+appdata: Fichier de base de données texte
+summary: Résumé
+scraper: Scraper
+scraper_d: Le scraper peut essayer de récupérer un livre sur des sites comme ttkan.co.
+  Il suffit de coller l'URL de la page principale du livre
+sc_file: Nom du fichier à enregistrer
+sc_c_min: Chapitre à partir de
+sc_c_max: Chapitre jusqu'à
+sc_sleep: Intervalle de téléchargement
+start: Démarrer
+sc_url: URL
+stop: Arrêter
+sc_single: Page unique
+sc_current: Fichier actuel
+e_pattern: Modèle
+e_chapters: Chapitres
+e_type: Type
+e_tp: Sélecteur de titre
+e_lt: Extracteurs de liens/texte
+no_text: Aucun texte n'a été chargé
+line: Ligne
+column: Colonne
+text: Texte
+sc_warn: Le scraper est un outil pour télécharger automatiquement des livres entiers
+  qui sont divisés en chapitres. Les sites web n'aiment pas les scrapers et ont tendance
+  à bannir ceux qui les utilisent, utilisez-le donc avec prudence. Diminuer l'intervalle
+  rend le scraper plus rapide, mais augmente également la probabilité d'être banni.
+p_meaning: Expliquer la signification et l'utilisation
+p_explain: Expliquer (avec contexte)
+prompt_meaning: Expliquez la signification et l'utilisation du mot {}
+prompt_examples: Donnez quelques exemples d'utilisation de phrases avec le mot
+prompt_explain: Expliquez la signification de {} dans le texte donné
+prompt_grammar: Expliquez la structure grammaticale de la phrase {}
+prompt_summary: Résumez le texte joint

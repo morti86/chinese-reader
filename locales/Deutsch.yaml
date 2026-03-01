@@ -1,0 +1,90 @@
+ocr: OCR
+load_file: Bilddatei laden
+clipboard: Bild aus Zwischenablage
+paste_here: Hier einfügen
+load: Laden
+save: Speichern
+ai_select: AI-Chat auswählen
+ask_ai: AI fragen
+name: Name
+url: URL
+provider: Anbieter
+model: Modell
+notes_placeholder: Notizen hier
+theme: Thema
+cancel: Abbrechen
+language: Sprache
+ok: OK
+mode: 'Modus '
+settings_ai: AI-Einstellungen
+settings: Einstellungen
+new: Neu
+add_note: Notiz hinzufügen
+delete_note: Notiz löschen
+image_status: 'Bildstatus: '
+none: Nicht geladen
+enter_model: Modellnamen eingeben
+ai_key: API-Schlüssel
+ai_role: Rolle
+load_text: Text laden
+select_text: Text auswählen
+save_text: Text speichern
+text_name: Name
+delete_text: Text löschen
+font_size: Schriftgröße
+ai_preamble: Präambel
+to_notes: Zu Notizen
+copy: Kopieren
+add_text: Text hinzufügen
+ocr_file: OCR-Datei
+deepl_key: DeepL API-Schlüssel
+eleven_key: Elevenlabs API-Schlüssel
+simplified: Zu vereinfacht
+restart_needed: Die Änderungen werden nach einem Neustart wirksam
+cursor: 'Cursor: Zeile {} Zeichen {}'
+deepl: DeepL
+ai_meaning: Bedeutung
+ai_examples: Beispiele
+ai_explain: Erklären
+ai_grammar: Grammatik
+load_img: Bild
+clear_img: Bild löschen
+save_prog: Fortschritt speichern
+ndims: Anzahl der Dimensionen
+max_docs: Maximale Anzahl Dokumente
+emb_mod: Embedding-Modell
+appdata: Textdatenbankdatei
+summary: Zusammenfassung
+scraper: Scraper
+scraper_d: Scraper kann versuchen, ein Buch von Seiten wie ttkan.co abzurufen. Einfach
+  die URL der Hauptseite des Buches einfügen
+sc_file: Dateiname zum Speichern
+sc_c_min: Kapitel von
+sc_c_max: Kapitel bis
+sc_sleep: Download-Intervall
+start: Start
+sc_url: URL
+stop: Stopp
+sc_single: Einzelseite
+sc_current: Aktuelle Datei
+e_pattern: Muster
+e_chapters: Kapitel
+e_type: Typ
+e_tp: Titel-Selektor
+e_lt: Link-/Text-Extraktor
+no_text: Kein Text wurde geladen
+line: Zeile
+column: Spalte
+text: Text
+sc_warn: Scraper ist ein Werkzeug zum automatischen Herunterladen ganzer Bücher, die
+  in Kapitel unterteilt sind. Websites mögen keine Scraper und neigen dazu, diejenigen
+  zu sperren, die sie verwenden. Daher verwenden Sie es mit Vorsicht. Eine Verringerung
+  des Intervalls macht den Scraper schneller, erhöht aber auch die Wahrscheinlichkeit,
+  gesperrt zu werden.
+p_meaning: Bedeutung und Verwendung erklären
+p_explain: Erklären (mit Kontext)
+prompt_meaning: Erklären Sie die Bedeutung und Verwendung des Wortes {}
+prompt_examples: Geben Sie einige Anwendungsbeispiele von Sätzen mit dem Wort
+prompt_explain: Erklären Sie die Bedeutung von {} im gegebenen Text
+prompt_grammar: Erklären Sie die grammatikalische Struktur des Satzes {}
+prompt_summary: Fassen Sie den angehängten Text zusammen

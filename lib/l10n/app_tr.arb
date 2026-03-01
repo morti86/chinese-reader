@@ -1,0 +1,342 @@
+{
+  "ocr": "OCR",
+  "@ocr": {
+    "description": "UI label: ocr"
+  },
+  "load_file": "Görüntü dosyası yükle",
+  "@load_file": {
+    "description": "UI label: load_file"
+  },
+  "clipboard": "Panodan görüntü",
+  "@clipboard": {
+    "description": "UI label: clipboard"
+  },
+  "paste_here": "Metni buraya yapıştır",
+  "@paste_here": {
+    "description": "UI label: paste_here"
+  },
+  "load": "Yükle",
+  "@load": {
+    "description": "UI label: load"
+  },
+  "save": "Kaydet",
+  "@save": {
+    "description": "UI label: save"
+  },
+  "ai_select": "AI sohbeti seç",
+  "@ai_select": {
+    "description": "UI label: ai_select"
+  },
+  "ask_ai": "AI'ya sor",
+  "@ask_ai": {
+    "description": "UI label: ask_ai"
+  },
+  "name": "Ad",
+  "@name": {
+    "description": "UI label: name"
+  },
+  "url": "URL",
+  "@url": {
+    "description": "UI label: url"
+  },
+  "provider": "Sağlayıcı",
+  "@provider": {
+    "description": "UI label: provider"
+  },
+  "model": "Model",
+  "@model": {
+    "description": "UI label: model"
+  },
+  "notes_placeholder": "Notlar buraya",
+  "@notes_placeholder": {
+    "description": "UI label: notes_placeholder"
+  },
+  "theme": "Tema",
+  "@theme": {
+    "description": "UI label: theme"
+  },
+  "cancel": "İptal",
+  "@cancel": {
+    "description": "UI label: cancel"
+  },
+  "language": "Dil",
+  "@language": {
+    "description": "UI label: language"
+  },
+  "ok": "Tamam",
+  "@ok": {
+    "description": "UI label: ok"
+  },
+  "mode": "Mod ",
+  "@mode": {
+    "description": "UI label: mode"
+  },
+  "settings_ai": "AI ayarları",
+  "@settings_ai": {
+    "description": "UI label: settings_ai"
+  },
+  "settings": "Ayarlar",
+  "@settings": {
+    "description": "UI label: settings"
+  },
+  "new": "Yeni",
+  "@new": {
+    "description": "UI label: new"
+  },
+  "add_note": "Not ekle",
+  "@add_note": {
+    "description": "UI label: add_note"
+  },
+  "delete_note": "Notu sil",
+  "@delete_note": {
+    "description": "UI label: delete_note"
+  },
+  "image_status": "Görüntü durumu: ",
+  "@image_status": {
+    "description": "UI label: image_status"
+  },
+  "none": "Yüklenmedi",
+  "@none": {
+    "description": "UI label: none"
+  },
+  "enter_model": "Model adını girin",
+  "@enter_model": {
+    "description": "UI label: enter_model"
+  },
+  "ai_key": "API Anahtarı",
+  "@ai_key": {
+    "description": "UI label: ai_key"
+  },
+  "ai_role": "Rol",
+  "@ai_role": {
+    "description": "UI label: ai_role"
+  },
+  "load_text": "Metin yükle",
+  "@load_text": {
+    "description": "UI label: load_text"
+  },
+  "select_text": "Metin seç",
+  "@select_text": {
+    "description": "UI label: select_text"
+  },
+  "save_text": "Metni kaydet",
+  "@save_text": {
+    "description": "UI label: save_text"
+  },
+  "text_name": "Ad",
+  "@text_name": {
+    "description": "UI label: text_name"
+  },
+  "delete_text": "Metni sil",
+  "@delete_text": {
+    "description": "UI label: delete_text"
+  },
+  "font_size": "Yazı tipi boyutu",
+  "@font_size": {
+    "description": "UI label: font_size"
+  },
+  "ai_preamble": "Önsöz",
+  "@ai_preamble": {
+    "description": "UI label: ai_preamble"
+  },
+  "to_notes": "Notlara",
+  "@to_notes": {
+    "description": "UI label: to_notes"
+  },
+  "copy": "Kopyala",
+  "@copy": {
+    "description": "UI label: copy"
+  },
+  "add_text": "Metin ekle",
+  "@add_text": {
+    "description": "UI label: add_text"
+  },
+  "ocr_file": "OCR Dosyası",
+  "@ocr_file": {
+    "description": "UI label: ocr_file"
+  },
+  "deepl_key": "Deepl API anahtarı",
+  "@deepl_key": {
+    "description": "UI label: deepl_key"
+  },
+  "eleven_key": "Elevenlabs API anahtarı",
+  "@eleven_key": {
+    "description": "UI label: eleven_key"
+  },
+  "simplified": "Basitleştirilmiş",
+  "@simplified": {
+    "description": "UI label: simplified"
+  },
+  "restart_needed": "Değişiklikler yeniden başlatıldıktan sonra etkili olacak",
+  "@restart_needed": {
+    "description": "UI label: restart_needed"
+  },
+  "cursor": "İmleç: satır {} karakter {}",
+  "@cursor": {
+    "description": "UI label: cursor"
+  },
+  "deepl": "Deepl",
+  "@deepl": {
+    "description": "UI label: deepl"
+  },
+  "ai_meaning": "Anlam",
+  "@ai_meaning": {
+    "description": "UI label: ai_meaning"
+  },
+  "ai_examples": "Örnekler",
+  "@ai_examples": {
+    "description": "UI label: ai_examples"
+  },
+  "ai_explain": "Açıkla",
+  "@ai_explain": {
+    "description": "UI label: ai_explain"
+  },
+  "ai_grammar": "Dilbilgisi",
+  "@ai_grammar": {
+    "description": "UI label: ai_grammar"
+  },
+  "load_img": "Görüntü",
+  "@load_img": {
+    "description": "UI label: load_img"
+  },
+  "clear_img": "Görüntüyü temizle",
+  "@clear_img": {
+    "description": "UI label: clear_img"
+  },
+  "save_prog": "İlerlemeyi kaydet",
+  "@save_prog": {
+    "description": "UI label: save_prog"
+  },
+  "ndims": "Boyut sayısı",
+  "@ndims": {
+    "description": "UI label: ndims"
+  },
+  "max_docs": "Maksimum belge sayısı",
+  "@max_docs": {
+    "description": "UI label: max_docs"
+  },
+  "emb_mod": "Gömme modeli",
+  "@emb_mod": {
+    "description": "UI label: emb_mod"
+  },
+  "appdata": "Metin veritabanı dosyası",
+  "@appdata": {
+    "description": "UI label: appdata"
+  },
+  "summary": "Özet",
+  "@summary": {
+    "description": "UI label: summary"
+  },
+  "scraper": "Kazıyıcı",
+  "@scraper": {
+    "description": "UI label: scraper"
+  },
+  "scraper_d": "Kazıyıcı, ttkan.co gibi sitelerden kitap almaya çalışabilir. Sadece kitabın ana sayfasının URL'sini yapıştırın",
+  "@scraper_d": {
+    "description": "UI label: scraper_d"
+  },
+  "sc_file": "Kaydedilecek dosya adı",
+  "@sc_file": {
+    "description": "UI label: sc_file"
+  },
+  "sc_c_min": "Bölüm başlangıcı",
+  "@sc_c_min": {
+    "description": "UI label: sc_c_min"
+  },
+  "sc_c_max": "Bölüm bitişi",
+  "@sc_c_max": {
+    "description": "UI label: sc_c_max"
+  },
+  "sc_sleep": "İndirme aralığı",
+  "@sc_sleep": {
+    "description": "UI label: sc_sleep"
+  },
+  "start": "Başlat",
+  "@start": {
+    "description": "UI label: start"
+  },
+  "sc_url": "URL",
+  "@sc_url": {
+    "description": "UI label: sc_url"
+  },
+  "stop": "Durdur",
+  "@stop": {
+    "description": "UI label: stop"
+  },
+  "sc_single": "Tek sayfa",
+  "@sc_single": {
+    "description": "UI label: sc_single"
+  },
+  "sc_current": "Geçerli dosya",
+  "@sc_current": {
+    "description": "UI label: sc_current"
+  },
+  "e_pattern": "Desen",
+  "@e_pattern": {
+    "description": "UI label: e_pattern"
+  },
+  "e_chapters": "Bölümler",
+  "@e_chapters": {
+    "description": "UI label: e_chapters"
+  },
+  "e_type": "Tür",
+  "@e_type": {
+    "description": "UI label: e_type"
+  },
+  "e_tp": "Başlık seçici",
+  "@e_tp": {
+    "description": "UI label: e_tp"
+  },
+  "e_lt": "Bağlantı/metin çıkarıcıları",
+  "@e_lt": {
+    "description": "UI label: e_lt"
+  },
+  "no_text": "Hiç metin yüklenmedi",
+  "@no_text": {
+    "description": "UI label: no_text"
+  },
+  "line": "Satır",
+  "@line": {
+    "description": "UI label: line"
+  },
+  "column": "Sütun",
+  "@column": {
+    "description": "UI label: column"
+  },
+  "text": "Metin",
+  "@text": {
+    "description": "UI label: text"
+  },
+  "sc_warn": "Kazıyıcı, bölümlere ayrılmış tüm kitapları otomatik olarak indirmek için bir araçtır. Web siteleri kazıyıcıları sevmez ve onları kullananları yasaklama eğilimindedir, bu nedenle dikkatli kullanın. Aralığı azaltmak kazıyıcıyı daha hızlı yapar, ancak yasaklanma olasılığını da artırır.",
+  "@sc_warn": {
+    "description": "UI label: sc_warn"
+  },
+  "p_meaning": "Anlamı ve kullanımını açıkla",
+  "@p_meaning": {
+    "description": "UI label: p_meaning"
+  },
+  "p_explain": "Açıkla (bağlamla)",
+  "@p_explain": {
+    "description": "UI label: p_explain"
+  },
+  "prompt_meaning": "{} kelimesinin anlamını ve kullanımını açıkla",
+  "@prompt_meaning": {
+    "description": "AI prompt: meaning"
+  },
+  "prompt_examples": "Kelime ile cümlelerin kullanım örnekleri ver",
+  "@prompt_examples": {
+    "description": "AI prompt: examples"
+  },
+  "prompt_explain": "Verilen metindeki {} anlamını açıkla",
+  "@prompt_explain": {
+    "description": "AI prompt: explain"
+  },
+  "prompt_grammar": "{} cümlesinin dilbilgisi yapısını açıkla",
+  "@prompt_grammar": {
+    "description": "AI prompt: grammar"
+  },
+  "prompt_summary": "Ekli metni özetle",
+  "@prompt_summary": {
+    "description": "AI prompt: summary"
+  }
+}

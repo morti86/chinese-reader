@@ -1,0 +1,89 @@
+ocr: OCR
+load_file: Load image file
+clipboard: Clipboard
+paste_here: Paste text here
+load: Load
+save: Save
+ai_select: Select AI chat
+ask_ai: Ask AI
+name: Name
+url: Url
+provider: Provider
+model: Model
+notes_placeholder: Notes here
+theme: Theme
+cancel: Cancel
+language: Language
+ok: OK
+mode: 'Mode '
+settings_ai: AI settings
+settings: Settings
+new: New
+add_note: Add note
+delete_note: Delete note
+image_status: 'Image status: '
+none: Not loaded
+enter_model: Enter model name
+ai_key: API Key
+ai_role: Role
+load_text: Load text
+select_text: Wybierz tekst
+save_text: Save text
+text_name: Nazwa
+delete_text: Delete text
+font_size: Font size
+ai_preamble: Preamble
+to_notes: To notes
+copy: Copy
+add_text: Add text
+ocr_file: OCR File
+deepl_key: Deepl API key
+eleven_key: Elevenlabs API key
+simplified: To simplified
+restart_needed: The changes will take effect after restart
+cursor: 'Cursor: line {} character {}'
+deepl: Deepl
+ai_meaning: Meaning
+ai_examples: Examples
+ai_explain: Explain
+ai_grammar: Grammar
+load_img: Image from clipboard
+clear_img: C Img
+save_prog: Save progress
+ndims: Number of dimensions
+max_docs: Max number of docs
+emb_mod: Embedding model
+appdata: Text database file
+summary: Summary
+scraper: Scraper
+scraper_d: Scrapper can try to retrieve a book from sites like ttkan.co. Just paste
+  the URL of the book's main page
+sc_file: Fine name to save as
+sc_c_min: Chapter from
+sc_c_max: Chater to
+sc_sleep: Download interval
+start: Start
+sc_url: Url
+stop: Stop
+sc_single: Single page
+sc_current: Current file
+e_pattern: Pattern
+e_chapters: Chapters
+e_type: Type
+e_tp: Title selector
+e_lt: Link/text extractors
+no_text: No text has been loaded
+line: Line
+column: Column
+text: Text
+sc_warn: Scraper is a tool for automatic downloading of entire books that are divided
+  into chapters. Websites do not like scrapers and tend to ban those who use them,
+  therefore use it with caution. Decreasing the interval makes scraper faster, but
+  also more likely to get you banned.
+p_meaning: Explain meaning and usage
+p_explain: Explain (with context)
+prompt_meaning: Explain the meaning and the usage of the word {}
+prompt_examples: Give some usage examples of sentences with the word
+prompt_explain: Explain the meaning of {} in the given text
+prompt_grammar: Explain the grammatical structure of the sentence {}
+prompt_summary: Summarize the attached text

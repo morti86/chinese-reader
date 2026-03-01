@@ -1,11 +1,11 @@
 use serde::{Serialize, Deserialize};
 use tracing::debug;
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, path::PathBuf};
 use std::fmt;
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType, TextExtractorType};
 
-use crate::utils::{Level, random_name};
+use crate::utils::{Level, random_name, url_for_provider};
 use std::path::Path;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
@@ -16,7 +16,7 @@ pub struct Keys {
 
 crate::make_enum!(Language, [English, Polski, Deutsch, Русский, Française, Italiano, Español, Türkçe, 日本語]);
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Window {
     pub width: f32,
     pub height: f32,
@@ -28,6 +28,23 @@ pub struct Window {
     pub spacing: f32,
     pub padding: f32,
     pub padding_frame: f32,
+}
+
+impl Default for Window {
+    fn default() -> Self {
+        Self {
+            width: 1400.0,
+            height: 800.0,
+            split: 0.65,
+            font_size: Some(18.0),
+            lang: Some(Language::English),
+            theme: "Catppuccin Mocha".to_string(),
+            settings_label_w: 200.0,
+            spacing: 2.0,
+            padding: 5.0,
+            padding_frame: 20.0,
+        }
+    }
 }
 
 impl Window {
@@ -52,99 +69,12 @@ pub struct AiChatConfig {
     pub url: Option<String>,
     pub model: String,
     pub provider: Provider,
-    pub ndims: Option<usize>,
-    pub max_docs: Option<usize>,
-    pub embedding_model: Option<String>,
 }
 
 impl fmt::Display for AiChatConfig {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,"{}",self.name)
     }
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
-pub struct Labels {
-    pub ocr: String,
-    pub load_file: String,
-    pub clipboard: String,
-    pub paste_here: String,
-    pub load: String,
-    pub save: String,
-    pub ai_select: String,
-    pub ask_ai: String,
-    pub name: String,
-    pub url: String,
-    pub provider: String,
-    pub model: String,
-    pub notes_placeholder: String,
-    pub theme: String,
-    pub cancel: String,
-    pub language: String,
-    pub ok: String,
-    pub mode: String,
-    pub settings_ai: String,
-    pub settings: String,
-    pub new: String,
-    pub add_note: String,
-    pub delete_note: String,
-    pub image_status: String,
-    pub none: String,
-    pub enter_model: String,
-    pub ai_key: String,
-    pub ai_role: String,
-    pub load_text: String,
-    pub select_text: String,
-    pub save_text: String,
-    pub text_name: String,
-    pub delete_text: String,
-    pub font_size: String,
-    pub ai_preamble: String,
-    pub to_notes: String,
-    pub copy: String,
-    pub add_text: String,
-    pub ocr_file: String,
-    pub deepl_key: String,
-    pub eleven_key: String,
-    pub simplified: String,
-    pub restart_needed: String,
-    pub cursor: String,
-    pub deepl: String,
-    pub ai_meaning: String,
-    pub ai_examples: String,
-    pub ai_explain: String,
-    pub ai_grammar: String,
-    pub load_img: String,
-    pub clear_img: String,
-    pub save_prog: String,
-    pub ndims: String,
-    pub max_docs: String,
-    pub emb_mod: String,
-    pub appdata: String,
-    pub summary: String,
-    pub scraper: String,
-    pub scraper_d: String,
-    pub sc_file: String,
-    pub sc_c_min: String,
-    pub sc_c_max: String,
-    pub sc_sleep: String,
-    pub start: String,
-    pub sc_url: String,
-    pub stop: String,
-    pub sc_single: String,
-    pub sc_current: String,
-    pub e_pattern: String,
-    pub e_chapters: String,
-    pub e_type: String,
-    pub e_tp: String,
-    pub e_lt: String,
-    pub no_text: String,
-    pub line: String,
-    pub column: String,
-    pub text: String,
-    pub sc_warn: String,
-    pub p_meaning: String,
-    pub p_explain: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default)]
@@ -156,11 +86,9 @@ pub struct Prompts {
     pub summary: String,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub ai_chats: BTreeMap<String, AiChatConfig>,
-    pub labels: BTreeMap<String, Labels>,
-    pub prompts: BTreeMap<String, Prompts>,
 
     pub db: Option<String>,
 
@@ -170,11 +98,15 @@ pub struct Config {
 
     pub anki: Option<String>,
     pub ocr_models: String,
+    //pub ocr_det_url: String,
+    //pub ocr_dict_url: String,
+    //pub ocr_rec_url: String,
     pub ai_chat: String,
     pub ai_role: String,
     pub ai_preamble: String,
 
     pub new_ai: Option<AiChatConfig>,
+    #[cfg(feature = "scraper")]
     pub scraper_sleep: Option<u64>,
     #[cfg(feature = "scraper")]
     pub link_ex: Vec<LinkExtractorType>,
@@ -186,15 +118,45 @@ pub struct Config {
     pub t_ex: Option<TextExtractorType>,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        let ocr_models = 
+            if let Some(mut config_dir) = dirs::config_dir() {
+                config_dir.push(crate::utils::APP_NAME);
+                config_dir.push("models");
+                config_dir
+            } else {
+                PathBuf::from("app.toml")
+            }.into_os_string().into_string().unwrap();
+        let mut ai_chats = BTreeMap::new();
+        ai_chats.insert(String::from("gpt"), 
+            AiChatConfig { 
+                name: String::from("ChatGPT"), 
+                provider: Provider::Openai, 
+                model: String::from("gpt-5"),
+                url: Some(url_for_provider(&Provider::Openai)),
+                ..Default::default()
+            });
+        Self { 
+            ai_chats, 
+            db: Some(String::from("appdata.db")),
+            window: Window::default(), 
+            keys: Keys::default(), 
+            level: Level::A1, 
+            anki: None, 
+            ocr_models, 
+            //ocr_det_url: String::from("https://huggingface.co/Kreuzberg/paddleocr-onnx-models/blob/main/PP-OCRv5_server_det_infer.onnx"),
+            //ocr_rec_url: String::from("https://huggingface.co/Kreuzberg/paddleocr-onnx-models/blob/main/rec/chinese/model.onnx"),
+            //ocr_dict_url: String::from("https://huggingface.co/Kreuzberg/paddleocr-onnx-models/blob/main/rec/chinese/dict.txt"),
+            ai_chat: String::from("gpt"), 
+            ai_role: String::new(), 
+            ai_preamble: String::new(), 
+            new_ai: None 
+        }
+    }
+}
+
 impl Config {
-    pub fn get_labels(&self) -> &Labels {
-        self.labels.get(self.window.lang.unwrap_or(Language::English).as_str()).unwrap()
-    }
-
-    pub fn get_prompts(&self) -> &Prompts {
-        self.prompts.get(self.window.lang.unwrap_or(Language::English).as_str()).unwrap()
-    }
-
     pub fn get_ai_config(&self) -> Option<&AiChatConfig> {
         self.ai_chats.get(self.ai_chat.as_str())
     }

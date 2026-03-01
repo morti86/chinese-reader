@@ -1,0 +1,90 @@
+ocr: OCR
+load_file: Cargar archivo de imagen
+clipboard: Imagen del portapapeles
+paste_here: Pegar texto aquí
+load: Cargar
+save: Guardar
+ai_select: Seleccionar chat de IA
+ask_ai: Preguntar a la IA
+name: Nombre
+url: URL
+provider: Proveedor
+model: Modelo
+notes_placeholder: Notas aquí
+theme: Tema
+cancel: Cancelar
+language: Idioma
+ok: OK
+mode: 'Modo '
+settings_ai: Configuración de IA
+settings: Configuración
+new: Nuevo
+add_note: Añadir nota
+delete_note: Eliminar nota
+image_status: 'Estado de la imagen: '
+none: No cargado
+enter_model: Introducir nombre del modelo
+ai_key: Clave API
+ai_role: Rol
+load_text: Cargar texto
+select_text: Seleccionar texto
+save_text: Guardar texto
+text_name: Nombre
+delete_text: Eliminar texto
+font_size: Tamaño de fuente
+ai_preamble: Preámbulo
+to_notes: A notas
+copy: Copiar
+add_text: Añadir texto
+ocr_file: Archivo OCR
+deepl_key: Clave API Deepl
+eleven_key: Clave API Elevenlabs
+simplified: A simplificado
+restart_needed: Los cambios tendrán efecto después de reiniciar
+cursor: 'Cursor: línea {} carácter {}'
+deepl: Deepl
+ai_meaning: Significado
+ai_examples: Ejemplos
+ai_explain: Explicar
+ai_grammar: Gramática
+load_img: Imagen
+clear_img: Borrar imagen
+save_prog: Guardar progreso
+ndims: Número de dimensiones
+max_docs: Número máximo de documentos
+emb_mod: Modelo de embedding
+appdata: Archivo de base de datos de texto
+summary: Resumen
+scraper: Scraper
+scraper_d: El scraper puede intentar recuperar un libro de sitios como ttkan.co. Simplemente
+  pegue la URL de la página principal del libro
+sc_file: Nombre del archivo para guardar
+sc_c_min: Capítulo desde
+sc_c_max: Capítulo hasta
+sc_sleep: Intervalo de descarga
+start: Iniciar
+sc_url: URL
+stop: Detener
+sc_single: Página única
+sc_current: Archivo actual
+e_pattern: Patrón
+e_chapters: Capítulos
+e_type: Tipo
+e_tp: Selector de título
+e_lt: Extractores de enlaces/texto
+no_text: No se ha cargado texto
+line: Línea
+column: Columna
+text: Texto
+sc_warn: El scraper es una herramienta para descargar automáticamente libros completos
+  que están divididos en capítulos. A los sitios web no les gustan los scrapers y
+  tienden a prohibir a quienes los usan, por lo tanto, úselo con precaución. Disminuir
+  el intervalo hace que el scraper sea más rápido, pero también aumenta la probabilidad
+  de que lo prohíban.
+p_meaning: Explicar significado y uso
+p_explain: Explicar (con contexto)
+prompt_meaning: Explica el significado y el uso de la palabra {}
+prompt_examples: Da algunos ejemplos de uso de frases con la palabra
+prompt_explain: Explica el significado de {} en el texto dado
+prompt_grammar: Explica la estructura gramatical de la frase {}
+prompt_summary: Resume el texto adjunto

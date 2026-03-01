@@ -1,5 +1,6 @@
 pub mod det;
 pub mod rec;
+pub mod dl;
 
 use std::path::Path;
 use std::sync::Arc;
@@ -65,3 +66,5 @@ pub async fn ocr_file(model_path: &str, file_name: impl AsRef<Path>) -> ReaderRe
     }
     Ok(res)
 }
+
+
