@@ -6,6 +6,12 @@ use crate::ai::ChatEvent;
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType, TextExtractorType};
 
+pub enum FileToDl {
+    Det,
+    Rec,
+    Index,
+}
+
 #[derive(Clone,Debug)]
 pub enum Message {
     ShowModal(String),

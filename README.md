@@ -7,8 +7,9 @@ Depending on a system, it might require to install ONNX Runtime.
 OCR uses PaddleOCR, a Chinese engine that is superior to Tesseract and other popular OCR engines in recognizing Chinese characters.
 
 Download the following files from Hugging Face
-- https://huggingface.co/Kreuzberg/paddleocr-onnx-models/blob/main/PP-OCRv5_server_det_infer.onnx
-- https://huggingface.co/Kreuzberg/paddleocr-onnx-models/blob/main/rec/chinese/model.onnx
+- https://huggingface.co/monkt/paddleocr-onnx/blob/main/detection/v5/det.onnx
+- https://huggingface.co/monkt/paddleocr-onnx/blob/main/languages/chinese/rec.onnx
+- https://huggingface.co/monkt/paddleocr-onnx/blob/main/languages/chinese/dict.txt
 
 And put them inside the models folder in your HOME directory (C:\Users\{user name}\models or /home/{user name}/models)
 

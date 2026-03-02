@@ -21,14 +21,14 @@ use tracing_subscriber::{
     prelude::*,
 };
 use tokio::sync::OnceCell;
-use rig::{agent::Agent, client::completion::CompletionModelHandle};
 
 #[macro_use]
 extern crate rust_i18n;
 
 i18n!("locales");
 
-static AGENT: OnceCell<Agent<CompletionModelHandle<'static>>> = OnceCell::const_new();
+
+static AGENT_NEW: OnceCell<std::sync::Arc<tokio::sync::RwLock<crate::ai::manager::AiChat>>> = OnceCell::const_new();
 
 const FONT: &'static [u8] = include_bytes!("../SymbolsNerdFont-Regular.ttf");
 

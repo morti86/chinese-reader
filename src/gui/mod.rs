@@ -1,21 +1,19 @@
 mod settings;
 pub mod message;
 
-use crate::ai::{ask_deepl, ChatCommand, ChatEvent};
+use crate::ai::{CancellationToken, ChatCommand, ChatEvent, ask_deepl};
 use crate::cedict::Cedict;
 use crate::error::ReaderError;
 use crate::ocr::dl::{DlCommand, DlEvent};
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType, ScraperCommand, ScraperEvent, TextExtractorType};
-use crate::{AGENT, ai, make_enum, modal, ocr};
+use crate::{ai, make_enum, modal, ocr};
 use crate::config::{AiChatConfig, Config};
 use iced::widget::text_editor::{Content, Position};
 use iced::{clipboard, Element, Subscription, Theme};
 use iced::widget::{text_editor,markdown};
-use rig::client::builder::DynClientBuilder;
 use rig::completion::Message as Rmsg;
-use rig::message::{ContentFormat, Document, DocumentMediaType, UserContent};
-use rig::streaming::StreamedAssistantContent;
+use rig::message::{Document, DocumentMediaType, UserContent};
 use rig::OneOrMany;
 use rusqlite::Connection;
 use tokio::sync::RwLock;
@@ -26,6 +24,7 @@ use tracing::{debug, error, info, warn};
 use std::path::PathBuf;
 use std::sync::Arc;
 use message::Message;
+use base64::prelude::*;
 
 make_enum!(SidebarMode, [AI, Notes, Dictionary, Anki]);
 make_enum!(TextOption, [Load, Save, Add, New, Delete]);
@@ -73,6 +72,7 @@ pub struct App {
 
     sender: Option<Sender<ChatCommand>>,
     dl_sender: Option<Sender<DlCommand>>,
+    cts: Option<Sender<CancellationToken>>,
     #[cfg(feature = "scraper")]
     sc_sender: Option<Sender<ScraperCommand>>,
 
@@ -149,14 +149,19 @@ impl App {
         debug!("Ai Chat key={}", key);
         let chat = conf.ai_chats.get(key.as_str()).unwrap();
         let key = chat.key.clone().unwrap_or_default();
-        let agent = DynClientBuilder::new()
-            .agent_with_api_key_val(chat.provider.as_str().to_lowercase().as_str(), chat.model.as_str(), key)
-            .unwrap()
-            .preamble(conf.ai_preamble.as_str())
-            .build();
-
-        if let Err(e) = AGENT.set(agent) {
-            error!("Error initializing agent: {}", e);
+        let provider = chat.provider;
+        
+        match crate::ai::manager::AiManager::new(provider, &key) {
+            Ok(agent) => {
+                let a = agent.preamble(&conf.ai_preamble)
+                    .ready(&chat.model);
+                if let Err(e) = crate::AGENT_NEW.set(Arc::new(RwLock::new(a))) {
+                    error!("Can't set agent{}", e);
+                }
+            }
+            Err(e) => {
+                error!("Agent init error: {}", e);
+            }
         }
 
         rust_i18n::set_locale(&conf.window.lang().to_string());
@@ -199,6 +204,7 @@ impl App {
             ai_changed: false,
             dl_sender: None,
             sender: None,
+            cts: None,
             #[cfg(feature = "scraper")]
             sc_sender: None,
 
@@ -573,6 +579,15 @@ impl App {
                     self.conf.ai_chats.insert(new_key.clone(), new_chat.clone());
                     self.conf.ai_chat = new_key;
                 }
+
+                if let Some(aic) = self.conf.get_ai_config() 
+                    && let Some(a) = crate::AGENT_NEW.get() {
+                    let mut r = a.blocking_write();
+                    let dupa = String::new();
+                    if let Ok(m) = crate::ai::manager::AiManager::new(aic.provider.clone(), &aic.key.as_ref().unwrap_or(&dupa)) {
+                        *r = m.ready(&aic.model);
+                    }
+                }
                 match toml::to_string(&self.conf) {
                     Ok(s) => {
                         return iced::Task::perform(async move {
@@ -665,33 +680,31 @@ impl App {
             }
             Message::AiChatEvent(ev) => {
                 match ev {
-                    ChatEvent::ChatReady(sender) => {
+                    ChatEvent::ChatReady { sender, cts } => {
                         self.sender = Some(sender);
+                        self.cts = Some(cts);
                     }
-                    ChatEvent::Message(content) => {
-                        match content {
-                            StreamedAssistantContent::Text(text) => {
-                                debug!("Received text: {:?}", text);
-                                self.answer_text.push_str(text.text.as_str());
-                                self.answer_raw.push_str(text.text.as_str());
-                            }
-                            StreamedAssistantContent::Final(_) => {
-                                debug!("Received final message from stream");
-                                self.answer_text.push_str("\n");
-                                self.answer_raw.push_str("\n");
-                            }
-                            StreamedAssistantContent::ToolCall(tc) => {
-                                debug!("ToolCall: {:?}", tc);
-                            }
-                            StreamedAssistantContent::Reasoning(re) => {
-                                debug!("Reasoning: {:?}", re);
-                                self.answer_text.push_str(re.reasoning.as_str());
-                                self.answer_raw.push_str(re.reasoning.as_str());
-                            }
-                        }
+                    ChatEvent::Text(text) => {
+                        debug!("Received text: {:?}", text);
+                        self.answer_text.push_str(text.as_str());
+                        self.answer_raw.push_str(text.as_str());
+                    }
+                    ChatEvent::Final => {
+                        debug!("Received final message from stream");
+                        self.answer_text.push_str("\n");
+                        self.answer_raw.push_str("\n");
+                    }
+                    ChatEvent::ToolCall { id, function, args } => {
+                        debug!("ToolCall: {}/{}: {}", id, function, args);
+                    }
+                    ChatEvent::Reasoning(re) => {
+                        debug!("Reasoning: {:?}", re);
+                    }
+                    ChatEvent::ToolCallDelta(tc) => {
+                        debug!("ToolCallDelta: {:?}", tc);
                     }
                     ChatEvent::ChatError(error) => {
-                        return iced::Task::done(Message::ShowModal(error.to_string()));
+                        return iced::Task::done(Message::ShowModal(error));
                     }
                 }
             }
@@ -1252,11 +1265,11 @@ impl App {
 
             let content = if with_text {
                 let text = Document {
-                    data: text_line.lines().nth(line).unwrap_or_default().to_string(),
-                    format: Some(ContentFormat::String),
+                    data: rig::message::DocumentSourceKind::String( text_line.lines().nth(line).unwrap_or_default().to_string() ),
                     media_type: Some(DocumentMediaType::TXT),
+                    additional_params: None,
                 };
-                OneOrMany::many(vec![UserContent::Text(prompt), UserContent::Document(text)])
+                OneOrMany::many(vec![UserContent::Text(prompt), UserContent::Document(text)])  
             } else {
                 Ok( OneOrMany::one(UserContent::Text(prompt) ) )
             };

@@ -1,68 +1,62 @@
 use deepl::DeepLApi;
-use iced::{futures::StreamExt, task::{sipper, Never, Sipper}};
-use rig::{message::Message as Rmsg, streaming::{StreamedAssistantContent, StreamingChat}
-};
-
-use tokio::sync::mpsc;
-use crate::{config::Language, error::{ReaderError, ReaderResult}, AGENT};
-use tracing::{debug, error, warn};
+use iced::task::{sipper, Never, Sipper};
+use rig::{message::Message as Rmsg, streaming::{ToolCallDeltaContent}};
+use tokio::sync::{RwLock, mpsc};
+use crate::{config::Language, error::{ReaderError, ReaderResult}};
+use tracing::{debug, info, warn};
+use crate::AGENT_NEW;
+pub mod manager;
 
 #[derive(Clone)]
 pub enum ChatCommand {
     Request{ message: Rmsg, chat_history: Vec<Rmsg> },
-    Stop,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug,Clone)]
 pub enum ChatEvent {
-    ChatReady(mpsc::Sender<ChatCommand>),
-    Message(StreamedAssistantContent<()>),
-    ChatError(ReaderError),
+    ChatReady{ sender: mpsc::Sender<ChatCommand>, cts: mpsc::Sender<CancellationToken>},
+    Text(String),
+    ToolCall { id: String, function: String, args: String },
+    ToolCallDelta(ToolCallDeltaContent),
+    Reasoning(rig::completion::message::Reasoning),
+    Final,
+    ChatError(String),
 }
+
+#[derive(Debug)]
+pub struct CancellationToken;
 
 pub fn connect() -> impl Sipper<Never, ChatEvent> {
     sipper(async |mut output| {
-        let (sender, mut receiver) = mpsc::channel::<ChatCommand>(100);
-        output.send(ChatEvent::ChatReady(sender)).await;
+        let (sender, mut receiver) = mpsc::channel::<ChatCommand>(10);
+        let (cts, mut ctr) = mpsc::channel::<CancellationToken>(10);
 
+        output.send(ChatEvent::ChatReady { sender, cts }).await;
+        
         loop {
-            match receiver.recv().await {
-                Some(ChatCommand::Request{message, chat_history}) => {
-                    match AGENT.get() {
-                        None => {
-                            error!("Trying to send to no agent");
-                            output.send(ChatEvent::ChatError(ReaderError::Ai("Trying to ask a non-existant agent".to_string()))).await;
-                        }
-                        Some(agent) => {
-                            if let Ok(mut stream) = agent.stream_chat(message, chat_history).await {
-                                while let Some(r) = stream.next().await {
-                                    match r {
-                                        Ok(chunk) => {
-                                            debug!("Received message");
-                                            output.send(ChatEvent::Message(chunk)).await
-                                        }
-                                        Err(e) => {
-                                            error!("Streaming error: {}", e);
-                                            output.send(ChatEvent::ChatError(ReaderError::Ai(e.to_string()))).await;
-                                        }
-                                    }
-                                }
-                            }
-                            
-                        }
-                    }
-
+            tokio::select! {
+                v = receiver.recv() => {
+                   match v {
+                       Some(ChatCommand::Request { message, chat_history }) => {
+                           match AGENT_NEW.get() {
+                               Some(md) => {
+                                   let mdr = md.read().await;
+                                   mdr.stream_chat(message, &mut output).await;
+                               }
+                               None => {
+                                    warn!("Ai chat not configured!");
+                               }
+                           }
+                       }
+                       None => {
+                           debug!("nothing");
+                       }
+                   }
                 }
-                Some(ChatCommand::Stop) => {
-                    tracing::info!("Stopped");
-                    continue;
+                _ = ctr.recv() => {
+                    info!("Action cancelled!");
                 }
-                None => {
-                    warn!("Received None!!!");
-                }
-
             }
-            
         }
     })
 }

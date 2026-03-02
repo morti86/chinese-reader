@@ -14,9 +14,9 @@ use crate::utils::get_image;
 
 const REC_MIN: f32 = 0.75;
 
-pub const REC_FILE: &str = "model.onnx";
-pub const DET_FILE: &str = "PP-OCRv5_server_det_infer.onnx";
-pub const INDEX: &str = "dict.txt";
+pub const REC_FILE: &str = "rec.onnx";//"model.onnx";
+pub const DET_FILE: &str = "det.onnx";//"PP-OCRv5_server_det_infer.onnx";
+pub const INDEX: &str = "dict 2.txt";
 
 pub async fn ocr_i(model_path: &str, content: Arc<RwLock<Vec<u8>>>) -> ReaderResult<String> {
     let det_path = model_path.to_owned()+DET_FILE;

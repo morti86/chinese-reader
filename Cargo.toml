@@ -7,7 +7,7 @@ edition = "2024"
 rayon = "1.10.0"
 iced = { version = "0.14.*" , features=["tokio", "advanced","sipper","svg","markdown"] }
 tendril = "0.4.3"
-rig-core = { version = "0.17.1", features = ["audio", "derive", "image"] }
+rig-core = { version = "0.30.0", features = ["audio", "derive", "image"] }
 deepl = "0.6.5"
 tokio = { version = "1.45.1", features = ["full"] }
 rusqlite = { version = "0.32.0", features = ["bundled", "chrono"] }

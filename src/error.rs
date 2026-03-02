@@ -1,7 +1,7 @@
 use std::string::FromUtf8Error;
 
 use image::ImageError;
-use rig::completion::CompletionError;
+use rig::{agent::StreamingError, completion::CompletionError};
 #[cfg(feature = "scraper")]
 use scraper::error::SelectorErrorKind;
 use tokio::task::JoinError;
@@ -103,6 +103,24 @@ impl From<FromUtf8Error> for ReaderError {
 impl From<reqwest::Error> for ReaderError {
     fn from(e: reqwest::Error) -> Self {
         Self::Scraper(e.to_string())
+    }
+}
+
+impl From<rig::http_client::Error> for ReaderError {
+    fn from(value: rig::http_client::Error) -> Self {
+        Self::Ai(value.to_string())
+    }
+}
+
+impl From<StreamingError> for ReaderError {
+    fn from(value: StreamingError) -> Self {
+        Self::Ai(value.to_string())
+    }
+}
+
+impl From<rig::completion::PromptError> for ReaderError {
+    fn from(value: rig::completion::PromptError) -> Self {
+        Self::Ai(value.to_string())
     }
 }
 
