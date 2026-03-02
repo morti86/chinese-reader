@@ -157,5 +157,5 @@ pub enum Message {
     Notes,
     NotesExport,
     NotesCopy(String),
-    NotesDelete{ document: u32, line: usize, character: usize },
+    NotesDelete{ document: u32, line: i64, character: i64 },
 }

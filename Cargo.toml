@@ -7,24 +7,22 @@ edition = "2024"
 rayon = "1.10.0"
 iced = { version = "0.14.*" , features=["tokio", "advanced","sipper","svg","markdown"] }
 tendril = "0.4.3"
-rig-core = { version = "0.30.0", features = ["audio", "derive", "image"] }
+rig-core = { version = "0.31.0", features = ["derive", "image"] }
 deepl = "0.6.5"
 tokio = { version = "1.45.1", features = ["full"] }
-rusqlite = { version = "0.32.0", features = ["bundled", "chrono"] }
-tracing = "0.1.41"
-tracing-subscriber = { version = "0.3.19", features = ["json", "chrono", "env-filter"] }
-tokio-stream = "0.1.17"
+rusqlite = { version = "0.38.0", features = ["bundled", "chrono"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.22", features = ["json", "chrono", "env-filter"] }
+tokio-stream = "0.1.18"
 serde = { version = "1.0.219", features = ["derive"] }
-base64 = "0.22.1"
-anyhow = "1.0.98"
-toml = "0.8.22"
-rand = "0.9.1"
-async-channel = "2.3.1"
+toml = "1.0.3"
+rand = "0.10.0"
+async-channel = "2.5.*"
 reqwest = { version = "0.12.15", features = ["json", "stream"] }
-image = "0.25.6"
+image = "0.25.9"
 ndarray = { version = "0.17.2", features = ["serde", "blas"] }
 ort = "2.0.0-rc.11"
-imageproc = "0.25.0"
+imageproc = "0.26.1"
 rfd = "0.15.4"
 scraper = { version = "0.24.0", optional = true }
 chrono = "0.4.42"
@@ -56,7 +54,7 @@ assets = [
     ["dict.db", "usr/share/cnreader/", "644"],
 ]
 # The section below defines system-level dependencies
-depends = "$auto, libssl3, libc6"
+depends = "$auto, libssl3, libc6 >= 2.39"
 # $auto: Automatically detects libraries linked to your binary
 # libssl3, libc6: Example manual dependencies required by your app
 
@@ -65,9 +63,3 @@ maintainer = "Morti <you@example.com>"
 
 # Optional: Copyright file path
 copyright = "LICENSE"
-
-# Optional: Assets (if you need to install config files or systemd services)
-# assets = [
-#   ["target/release/my-app", "usr/bin/", "755"],
-#   ["config.toml", "etc/my-app/", "644"]
-# ]

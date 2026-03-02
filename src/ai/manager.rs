@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use rig::{agent::Agent, client::CompletionClient, completion::Prompt, providers::{
     anthropic, deepseek, gemini, mistral, ollama, openai, xai
-    }, streaming::{StreamedAssistantContent, StreamingPrompt}, wasm_compat::WasmCompatSend
+    }, streaming::{StreamedAssistantContent, StreamingPrompt, StreamingChat}, wasm_compat::WasmCompatSend
 };
 use sipper::{Sender, StreamExt};
 
@@ -55,6 +55,41 @@ macro_rules! stream_prompt {
             }
         }
     };
+    ($t:expr, $p:expr, $o:expr, $m:ty, $hist:expr) => {
+        {
+            let mut r = $t.as_ref().unwrap().stream_chat($p,$hist).await;
+            while let Some(r) = r.next().await {
+                match r {
+                    Ok(chunk) => {
+                        tracing::debug!("Received message");
+                        match chunk {
+                            rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::Text(text)) => {
+                                $o.send(ChatEvent::Text(text.text)).await;
+                            },
+                            rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::ToolCall{ tool_call, .. }) => {
+                                tracing::debug!("tool call id={}, function={:?}", tool_call.id, tool_call.function);
+                            }
+                            rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::ToolCallDelta{ content, .. }) => {
+                                tracing::debug!("tool call delta: {:?}", content);
+                            }
+                            rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::Reasoning(re)) => {
+                                tracing::debug!("Reasoning: {:?}", re);
+                            }
+                            rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::ReasoningDelta{ reasoning, .. }) => {
+                                tracing::debug!("Reasoning delta: {:?}", reasoning);
+                            }
+                            _ => $o.send(ChatEvent::Final).await,
+                        }
+                    }
+                    Err(e) => {
+                        tracing::error!("Streaming error: {}", e);
+                        $o.send(ChatEvent::ChatError(e.to_string())).await;
+                    }
+                }
+            }
+        }
+    };
+
 }
 
 #[derive(Clone)]
@@ -220,7 +255,7 @@ impl AiManager<Ready> {
         }
     }
 
-    pub async fn stream_chat(&self, prompt: impl Into<rig::completion::Message> + WasmCompatSend, output: &mut Sender<ChatEvent>) {
+    pub async fn stream_prompt(&self, prompt: impl Into<rig::completion::Message> + WasmCompatSend, output: &mut Sender<ChatEvent>) {
         match self {
             Self::Xai { client: _, agent, preamble: _ } => {
                 stream_prompt!(agent, prompt, output, rig::providers::openai::responses_api::streaming::StreamingCompletionResponse);
@@ -244,7 +279,33 @@ impl AiManager<Ready> {
                 stream_prompt!(agent, prompt, output, rig::providers::anthropic::streaming::StreamingCompletionResponse);
             }
         }
-
     }
+
+    pub async fn stream_chat(&self, prompt: impl Into<rig::completion::Message> + WasmCompatSend, output: &mut Sender<ChatEvent>, chat_history: Vec<rig::message::Message>) {
+        match self {
+            Self::Xai { client: _, agent, preamble: _ } => {
+                stream_prompt!(agent, prompt, output, rig::providers::openai::responses_api::streaming::StreamingCompletionResponse, chat_history);
+            }
+            Self::Openai { client: _, agent, _pd, preamble: _ } => {
+                stream_prompt!(agent, prompt, output, rig::providers::openai::responses_api::streaming::StreamingCompletionResponse, chat_history);
+            }
+            Self::Ollama { client: _, agent, preamble: _ } => {
+                stream_prompt!(agent, prompt, output, rig::providers::ollama::StreamingCompletionResponse, chat_history);
+            }
+            Self::Gemini { client: _, agent, preamble: _ } => {
+                stream_prompt!(agent, prompt, output, rig::providers::gemini::streaming::StreamingCompletionResponse, chat_history);
+            }
+            Self::Mistral { client: _, agent, preamble: _ } => {
+                stream_prompt!(agent, prompt, output, rig::providers::mistral::completion::CompletionResponse, chat_history);
+            }
+            Self::Deepseek { client: _, agent, preamble: _ } => {
+                stream_prompt!(agent, prompt, output, rig::providers::deepseek::StreamingCompletionResponse, chat_history);
+            }
+            Self::Anthropic { client: _, agent, preamble: _ } => {
+                stream_prompt!(agent, prompt, output, rig::providers::anthropic::streaming::StreamingCompletionResponse, chat_history);
+            }
+        }
+    }
+
 }
 

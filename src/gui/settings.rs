@@ -99,7 +99,7 @@ pub fn notes<'a>(app: &'a super::App) -> Column<'a,Message> {
         table::column(bold(t!("column")), |note: &crate::textbase::Note| text(note.char)  ),
         table::column(bold(t!("text")), |note: &crate::textbase::Note| text(note.text.as_str())  ).width(1000.0),
         table::column( "", |note: &crate::textbase::Note| button_nf!("\u{f0c5}").on_press(Message::NotesCopy(note.text.clone())) ),
-        table::column( "", |note: &crate::textbase::Note| button_nf!("\u{f01b4}").on_press(Message::NotesDelete { document: note.doc, line: note.line, character: note.char } ) ),
+        table::column( "", |note: &crate::textbase::Note| button_nf!("\u{f01b4}").on_press(Message::NotesDelete { document: note.doc, line: note.line , character: note.char } ) ),
     ];
     let idc_list = table(columns ,&app.notes).padding(5.0).separator(1.0);
 
@@ -158,7 +158,7 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
     match sm {
         SidebarMode::Notes => {
             let c = app.text.cursor().position;
-            let pos = (c.line, c.column);
+            let pos = (c.line as i64, c.column as i64);
             let note = app.notes.iter().find(|n| n.line == pos.0 && n.char == pos.1);
 
             let a_delete = note.map(|_| Message::RemoveNote);

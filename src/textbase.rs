@@ -11,8 +11,8 @@ pub struct Document {
     pub title: String,
     #[embed]
     pub content: String,
-    pub line: usize,
-    pub character: usize,
+    pub line: i64,
+    pub character: i64,
 }
 
 impl Document {
@@ -41,8 +41,8 @@ impl Display for Document {
 pub struct Note {
     pub id: u32,
     pub doc: u32,
-    pub line: usize,
-    pub char: usize,
+    pub line: i64,
+    pub char: i64,
     pub text: String,
 }
 
@@ -51,7 +51,7 @@ impl Note {
         self.id == 0 || self.doc == 0
     }
 
-    pub fn pos(&self) -> (usize,usize) {
+    pub fn pos(&self) -> (i64,i64) {
         (self.line,self.char)
     }
 }
@@ -83,7 +83,7 @@ pub fn get_documents(conn: &Connection) -> ReaderResult<Vec<Document>> {
     Ok(doc_iter.map(|doc| doc.unwrap()).collect())
 }
 
-pub fn update_progress(conn: &mut Connection, id: usize, character: usize, line: usize) -> ReaderResult<()> {
+pub fn update_progress(conn: &mut Connection, id: i64, character: i64, line: i64) -> ReaderResult<()> {
     let tx = conn.transaction()?;
     tx.execute("UPDATE Documents SET Character = ?1, Line = ?2 WHERE Id = ?3", [character, line, id])?;
     tx.commit()?;
@@ -111,7 +111,7 @@ pub fn save_text(conn: &mut Connection, id: u32, title: &str, content: &str) -> 
     Ok(id)
 }
 
-pub fn save_note(conn: &mut Connection, line: usize, character: usize, document: u32, content: &str) -> ReaderResult<i64> {
+pub fn save_note(conn: &mut Connection, line: i64, character: i64, document: u32, content: &str) -> ReaderResult<i64> {
     debug!("Save note: {}/{}:{}",document,line,character);
     let tx = conn.transaction()?;
     tx.execute("INSERT INTO Notes (Line, Character, Document, Content) VALUES (?1, ?2, ?3, ?4)", params![line, character, document, content])?;
@@ -128,7 +128,7 @@ pub fn delete_text(conn: &mut Connection, title: &str) -> ReaderResult<()> {
     Ok(())
 }
 
-pub fn delete_note(conn: &mut Connection, document: u32, line: usize, character: usize) -> ReaderResult<()> {
+pub fn delete_note(conn: &mut Connection, document: u32, line: i64, character: i64) -> ReaderResult<()> {
     let tx = conn.transaction()?;
     tx.execute("DELETE FROM Notes WHERE Document = ?1 AND Line = ?2 AND Character = ?3", params![document, line, character])?;
     tx.commit()?;
@@ -186,13 +186,13 @@ pub async fn get_doc_md(db_file: &str, doc_id: u32) -> ReaderResult<String> {
                 debug!("New line found: {}", i);
                 last_pos = 0;
 
-                let line_notes = notes.iter().filter(|n| n.line == i);
+                let line_notes = notes.iter().filter(|n| n.line == i as i64);
 
                 for note in line_notes {
                     debug!("Inserting string at {}:{}, last_pos={}", note.line, note.char, last_pos);
-                    result.push_str(&line[last_pos..note.char]);
+                    result.push_str(&line[last_pos..(note.char as usize)]);
                     result.push_str( format!("[*](n:{}:{})",note.line,note.char).as_str() );
-                    last_pos = note.char;
+                    last_pos = note.char as usize;
                 };
                 result.push_str(&line[last_pos..]);
                 result.push_str("\n\n");

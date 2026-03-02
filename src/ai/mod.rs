@@ -1,8 +1,8 @@
 use deepl::DeepLApi;
 use iced::task::{sipper, Never, Sipper};
 use rig::{message::Message as Rmsg, streaming::{ToolCallDeltaContent}};
-use tokio::sync::{RwLock, mpsc};
-use crate::{config::Language, error::{ReaderError, ReaderResult}};
+use tokio::sync::mpsc;
+use crate::{config::Language, error::ReaderResult};
 use tracing::{debug, info, warn};
 use crate::AGENT_NEW;
 pub mod manager;
@@ -41,7 +41,7 @@ pub fn connect() -> impl Sipper<Never, ChatEvent> {
                            match AGENT_NEW.get() {
                                Some(md) => {
                                    let mdr = md.read().await;
-                                   mdr.stream_chat(message, &mut output).await;
+                                   mdr.stream_chat(message, &mut output, chat_history).await;
                                }
                                None => {
                                     warn!("Ai chat not configured!");

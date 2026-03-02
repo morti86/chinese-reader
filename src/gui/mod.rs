@@ -24,7 +24,6 @@ use tracing::{debug, error, info, warn};
 use std::path::PathBuf;
 use std::sync::Arc;
 use message::Message;
-use base64::prelude::*;
 
 make_enum!(SidebarMode, [AI, Notes, Dictionary, Anki]);
 make_enum!(TextOption, [Load, Save, Add, New, Delete]);
@@ -505,7 +504,7 @@ impl App {
                     && let Ok(notes) = get_notes(&self.doc_conn, self.loaded_text.id) {
                     self.notes = notes;
                 }
-                if let Some(note) = self.notes.iter().find(|n| n.line == c.line && n.char == c.column ) {
+                if let Some(note) = self.notes.iter().find(|n| n.line == (c.line as i64) && n.char == (c.column as i64) ) {
                     debug!("Found note");
                     self.sidebar_notes = text_editor::Content::with_text(note.text.as_str());
                 } else {
@@ -750,10 +749,10 @@ impl App {
             }
             Message::UpdateProgress => {
                 let c = self.text.cursor().position;
-                let line = c.line;
-                let character = c.column;
+                let line = c.line as i64;
+                let character = c.column as i64;
 
-                if let Err(e) = update_progress(&mut self.doc_conn, self.loaded_text.id as usize, character, line) {
+                if let Err(e) = update_progress(&mut self.doc_conn, self.loaded_text.id as i64, character, line) {
                     error!("Error updating progress {}", e);
                     return iced::Task::done(Message::ShowModal(e.to_string()));
                 }
@@ -762,8 +761,8 @@ impl App {
                 if self.loaded_text.id > 0 {
                     let c = self.text.cursor().position;
                     debug!("Cursor position: {:?}", c);
-                    let line = c.line;
-                    let character = c.column;
+                    let line = c.line as i64;
+                    let character = c.column as i64;
                     let content = self.sidebar_notes.text();
                     
                     self.notes.push(Note { id: 0, doc: self.loaded_text.id, line, char: character, text: content.clone() });
@@ -783,8 +782,8 @@ impl App {
             Message::RemoveNote => {
                 if self.loaded_text.id > 0 {
                     let c = self.text.cursor().position;
-                    let line = c.line;
-                    let character = c.column;
+                    let line = c.line as i64;
+                    let character = c.column as i64;
 
                     if let Err(e) = delete_note(&mut self.doc_conn, self.loaded_text.id, line, character) {
                         error!("Error deleting note: {}", e);
@@ -936,7 +935,7 @@ impl App {
                             && let Ok(column) = column.parse::<usize>() {
 
                             self.sidebar_notes = Content::new();
-                            let note = self.notes.iter().find(|n| n.line == line && n.char == column);
+                            let note = self.notes.iter().find(|n| n.line == line as i64 && n.char == column as i64);
                             if let Some(note) = note {
                                 self.sidebar_notes = Content::with_text(note.text.as_str());
                                 self.sidebar_mode = SidebarMode::Notes;
@@ -965,7 +964,7 @@ impl App {
                 }
             }
             Message::NotesDelete { document, line, character } => {
-                if let Err(e) = delete_note(&mut self.doc_conn, document, line, character) {
+                if let Err(e) = delete_note(&mut self.doc_conn, document, line as i64, character as i64) {
                     return iced::Task::done(Message::ShowModal(e.to_string()));
                 }
                 return iced::Task::done(Message::Notes);

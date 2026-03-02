@@ -60,7 +60,7 @@ pub fn search_anki(conn: &Connection, sel: &str) -> ReaderResult<Vec<String>> {
     Ok(results)
 }
 
-pub fn count_anki(conn: &Connection) -> ReaderResult<usize> {
+pub fn count_anki(conn: &Connection) -> ReaderResult<i64> {
     let res = conn.query_row("SELECT COUNT(*) FROM notes",
         [], |row| row.get(0) )?;
     Ok(res)
