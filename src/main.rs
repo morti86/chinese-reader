@@ -12,9 +12,10 @@ mod ai;
 mod scraper;
 mod anki;
 
-
+#[cfg(debug_assertions)]
 use tracing::Level;
 pub use tracing::{debug, error, info, trace, warn};
+#[cfg(debug_assertions)]
 use tracing_subscriber::{
     filter::{LevelFilter, Targets},
     fmt,
