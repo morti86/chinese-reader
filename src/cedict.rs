@@ -1,5 +1,5 @@
 use rusqlite::{Connection, Row};
-use std::fmt;
+use std::{collections::HashMap, fmt};
 use rayon::prelude::*;
 use tracing::debug;
 use std::collections::BTreeMap;
@@ -98,6 +98,7 @@ impl fmt::Display for Entry {
 
 pub struct Cedict {
     data_t: BTreeMap<char, Vec<Entry>>,
+    data_hsk: HashMap<u32,Vec<Entry>>,
 }
 
 impl Cedict {
@@ -116,18 +117,25 @@ impl Cedict {
         let mut st = conn.prepare("SELECT * from Cedict")?;
         
         let mut data_t: BTreeMap<char, Vec<Entry>> = BTreeMap::new();
+        let mut data_hsk: HashMap<u32, Vec<Entry>> = HashMap::new();
         let mut data_tr = st.query([])?;
         while let Ok(next) = data_tr.next() {
             if let Some(row) = next {
                 let e = Entry::from_row(row);
                 let k = e.index();
-                data_t.entry(k).or_default().push(e);
+                if let Some(hsk) = e.hsk {
+                    data_t.entry(k).or_default().push(e.clone());
+                    data_hsk.entry(hsk).and_modify(|x| x.push(e));
+                } else {
+                    data_t.entry(k).or_default().push(e);
+                }
             } else {
                 break;
             }
         }
         Ok(Self { 
             data_t,
+            data_hsk,
         })
     }
 
@@ -185,7 +193,33 @@ impl Cedict {
         vec![]
     }
 
+    /// List all entries that are in Anki and have HSK level
+    pub fn get_hsk_anki_lists(&self, anki_conn: &Connection) -> HashMap<u32, Vec<&Entry>> {
+        self.data_hsk.iter()
+            .map(|(&hsk,list)| (
+                    hsk,
+                    list.iter().filter_map(|e| {
+                if let Ok(true) = crate::anki::find_anki(anki_conn, &e.sim)  {
+                    Some(e)
+                } else { 
+                    None
+                }
+            }).collect::<Vec<_>>())
+            ).collect::<HashMap<_,Vec<_>>>()
+    }
 
+    /// List all entries that are in Anki
+    pub fn get_anki_lists(&self, anki_conn: &Connection) -> Vec<&Entry> {
+        self.data_t.iter()
+            .map(|(_,list)| list.iter().filter_map(|e| {
+                if let Ok(true) = crate::anki::find_anki(anki_conn, &e.sim)  {
+                    Some(e)
+                } else { 
+                    None
+                }
+            }).collect::<Vec<_>>()
+            ).flatten().collect()
+    }
 
 }
 

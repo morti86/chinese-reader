@@ -146,6 +146,14 @@ impl AiManager<Init> {
         Ok(s)
     }
 
+    pub fn new_ollama_url(url: &str) -> crate::error::ReaderResult<AiManager<Init>> {
+        Ok(AiManager::<Init>::Ollama { 
+            client: ollama::Client::builder().base_url(url).api_key(rig::client::Nothing).build()?,
+            agent: None,
+            preamble: None,
+        })
+    }
+
     pub fn preamble(self, preamble: &str) -> AiManager<Init> {
         let preamble = Some(preamble.to_string());
         match self {
@@ -172,7 +180,7 @@ impl AiManager<Init> {
             }
         }
     }
-    
+
     pub fn ready(self, model: &str) -> AiManager<Ready> {
         match self {
             Self::Openai { client, agent: _, preamble, _pd } => {

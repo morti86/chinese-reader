@@ -149,17 +149,34 @@ impl App {
         let chat = conf.ai_chats.get(key.as_str()).unwrap();
         let key = chat.key.clone().unwrap_or_default();
         let provider = chat.provider;
-        
-        match crate::ai::manager::AiManager::new(provider, &key) {
-            Ok(agent) => {
-                let a = agent.preamble(&conf.ai_preamble)
-                    .ready(&chat.model);
-                if let Err(e) = crate::AGENT_NEW.set(Arc::new(RwLock::new(a))) {
-                    error!("Can't set agent{}", e);
+
+        if provider == crate::config::Provider::Ollama
+            && let Some(url) = chat.url.as_ref() {
+            match crate::ai::manager::AiManager::new_ollama_url(url) {
+                Ok(agent) => {
+                    let a = agent.preamble(&conf.ai_preamble)
+                        .ready(&chat.model);
+                    if let Err(e) = crate::AGENT_NEW.set(Arc::new(RwLock::new(a))) {
+                        error!("Can't set agent{}", e);
+                    }
+                }
+                Err(e) => {
+                    error!("Agent init error: {}", e);
                 }
             }
-            Err(e) => {
-                error!("Agent init error: {}", e);
+        }
+        else {
+            match crate::ai::manager::AiManager::new(provider, &key) {
+                Ok(agent) => {
+                    let a = agent.preamble(&conf.ai_preamble)
+                        .ready(&chat.model);
+                    if let Err(e) = crate::AGENT_NEW.set(Arc::new(RwLock::new(a))) {
+                        error!("Can't set agent{}", e);
+                    }
+                }
+                Err(e) => {
+                    error!("Agent init error: {}", e);
+                }
             }
         }
 
@@ -583,7 +600,11 @@ impl App {
                     && let Some(a) = crate::AGENT_NEW.get() {
                     let mut r = a.blocking_write();
                     let dupa = String::new();
-                    if let Ok(m) = crate::ai::manager::AiManager::new(aic.provider.clone(), &aic.key.as_ref().unwrap_or(&dupa)) {
+                    if aic.provider == crate::config::Provider::Ollama
+                        && let Some(url) = aic.url.as_ref()
+                        && let Ok(m) = crate::ai::manager::AiManager::new_ollama_url(url) {
+                        *r = m.ready(&aic.model);
+                    } else if let Ok(m) = crate::ai::manager::AiManager::new(aic.provider.clone(), &aic.key.as_ref().unwrap_or(&dupa)) {
                         *r = m.ready(&aic.model);
                     }
                 }

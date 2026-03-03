@@ -5,6 +5,8 @@ use std::fmt;
 
 use crate::error::ReaderResult;
 
+pub const HSK_TOTAL: [f32; 7] = [477.0, 736.0, 940.0, 971.0, 1056.0, 1076.0, 5301.0];
+
 #[derive(Debug,Clone,PartialEq)]
 pub struct AnkiEntry {
     word: String,
@@ -60,11 +62,23 @@ pub fn search_anki(conn: &Connection, sel: &str) -> ReaderResult<Vec<String>> {
     Ok(results)
 }
 
+pub fn find_anki(conn: &Connection, sel: &str) -> ReaderResult<bool> {
+    let exists: bool = conn.query_row(
+    "SELECT REPLACE(sfld, CHAR(10), ' ') FROM notes WHERE REPLACE(sfld, CHAR(10), '') = ?",
+    [&sel],
+    |row| row.get(0),
+    )?;
+    Ok(exists)
+}
+
+
 pub fn count_anki(conn: &Connection) -> ReaderResult<i64> {
     let res = conn.query_row("SELECT COUNT(*) FROM notes",
         [], |row| row.get(0) )?;
     Ok(res)
 }
+
+
 
 pub fn anki_chars(conn: &Connection) -> ReaderResult<HashSet<char>> {
     let mut st = conn.prepare("SELECT REPLACE(sfld, CHAR(10), ' ') FROM notes")?;
@@ -76,8 +90,6 @@ pub fn anki_chars(conn: &Connection) -> ReaderResult<HashSet<char>> {
     }
     Ok(results)
 }
-
-
 
 #[cfg(test)]
 mod tests {
