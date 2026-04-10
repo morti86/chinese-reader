@@ -181,55 +181,37 @@ impl AiManager<Init> {
         }
     }
 
+
     pub fn ready(self, model: &str) -> AiManager<Ready> {
+        tracing::debug!("Setting up model: {}", model);
         match self {
             Self::Openai { client, agent: _, preamble, _pd } => {
-                let r = match &preamble {
-                    Some(preamble) => client.agent(model).preamble(&preamble).build(),
-                    None =>  client.agent(model).build(),
-                };
+                let r = client.agent(model).preamble(&preamble.clone().unwrap_or_default()).build();
                 AiManager::<Ready>::Openai { client, agent: Some(r), preamble, _pd: PhantomData }
             }
             Self::Ollama { client, agent: _, preamble, } => {
-                let r = match &preamble {
-                    Some(preamble) => client.agent(model).preamble(&preamble).build(),
-                    None =>  client.agent(model).build(),
-                };
+                let mut r = client.agent(model).preamble(&preamble.clone().unwrap_or_default()).build();
+                r.max_tokens = Some(8192);
                 AiManager::<Ready>::Ollama { client, agent: Some(r), preamble }
             }
             Self::Deepseek { client, agent: _, preamble, } => {
-                let r = match &preamble {
-                    Some(preamble) => client.agent(model).preamble(&preamble).build(),
-                    None =>  client.agent(model).build(),
-                };
+                let r = client.agent(model).preamble(&preamble.clone().unwrap_or_default()).build();
                 AiManager::<Ready>::Deepseek { client, agent: Some(r), preamble }
             }
             Self::Anthropic { client, agent: _, preamble, } => {
-                let r = match &preamble {
-                    Some(preamble) => client.agent(model).preamble(&preamble).build(),
-                    None =>  client.agent(model).build(),
-                };
+                let r = client.agent(model).preamble(&preamble.clone().unwrap_or_default()).build();
                 AiManager::<Ready>::Anthropic { client, agent: Some(r), preamble }
             }
             Self::Xai { client, agent: _, preamble, } => {
-                let r = match &preamble {
-                    Some(preamble) => client.agent(model).preamble(&preamble).build(),
-                    None =>  client.agent(model).build(),
-                };
+                let r = client.agent(model).preamble(&preamble.clone().unwrap_or_default()).build();
                 AiManager::<Ready>::Xai { client, agent: Some(r), preamble }
             }
             Self::Gemini { client, agent: _, preamble, } => {
-                let r = match &preamble {
-                    Some(preamble) => client.agent(model).preamble(&preamble).build(),
-                    None =>  client.agent(model).build(),
-                };
+                let r = client.agent(model).preamble(&preamble.clone().unwrap_or_default()).build();
                 AiManager::<Ready>::Gemini { client, agent: Some(r), preamble }
             }
             Self::Mistral { client, agent: _, preamble, } => {
-                let r = match &preamble {
-                    Some(preamble) => client.agent(model).preamble(&preamble).build(),
-                    None =>  client.agent(model).build(),
-                };
+                let r = client.agent(model).preamble(&preamble.clone().unwrap_or_default()).build();
                 AiManager::<Ready>::Mistral { client, agent: Some(r), preamble }
             }
         }
@@ -314,6 +296,4 @@ impl AiManager<Ready> {
             }
         }
     }
-
 }
-

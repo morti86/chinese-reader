@@ -350,8 +350,10 @@ impl App {
                 self.state = AppState::Settings;
             }
             Message::SetTextValue(s) => {
-                self.text = text_editor::Content::new();
-                self.loaded_text = Doc::default();
+                if !self.dtn_append {
+                    self.text = text_editor::Content::new();
+                    self.loaded_text = Doc::default();
+                }
                 self.text.perform(
                     text_editor::Action::Edit(text_editor::Edit::Paste(Arc::new(s)))
                 );
@@ -535,7 +537,7 @@ impl App {
                 self.anki_result = markdown::Content::new();
                 v.iter().for_each(|x| {
                     let x = x.trim();
-                    let item = format!("\n- [{}](https://cedict-link-clicked/?v={})", x, x);
+                    let item = format!("\n- [{}](c:{})", x, x);
                     self.anki_result.push_str(item.as_str());
                 });
             }
@@ -725,6 +727,13 @@ impl App {
                     }
                     ChatEvent::ChatError(error) => {
                         return iced::Task::done(Message::ShowModal(error));
+                    }
+                }
+            }
+            Message::AiStop => {
+                if let Some(cts) = &self.cts {
+                    if let Err(e) = cts.blocking_send(CancellationToken {}) {
+                        error!("Error stopping: {}", e);
                     }
                 }
             }

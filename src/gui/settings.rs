@@ -1,6 +1,6 @@
 use iced::advanced::text::highlighter::PlainText;
 use iced::widget::{Column, Row, TextEditor, button, checkbox, column, container, markdown, pick_list, progress_bar, row, scrollable, slider, space, table, text, text_editor, text_input, tooltip};
-use iced::{Alignment, Element, Font, Renderer, Theme};
+use iced::{Alignment, Element, Font, Padding, Renderer, Theme};
 use crate::config::{Language, Provider, Window};
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType,TextExtractorType};
@@ -155,6 +155,8 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
         idr_mode = idr_mode.push(m);
     }
 
+    let id_mode = container(idr_mode).style(container::bordered_box).width(420.0);
+
     match sm {
         SidebarMode::Notes => {
             let c = app.text.cursor().position;
@@ -172,7 +174,7 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
                 .on_action(Message::NotesAction)
                 .height(500.0);
             
-            column![container(idr_mode).style(container::bordered_box).width(380.0), idc_notes, space::vertical(), idr_note].padding(win.padding_frame).align_x(iced::Alignment::Center)
+            column![id_mode, idc_notes, space::vertical(), idr_note].padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
         SidebarMode::AI => {
             let idc_meaning = button_t!(t!("ai_meaning"), t!("p_meaning"), PromptMeaning);
@@ -190,8 +192,10 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
             let idc_answer = scrollable(markdown::view(app.answer_text.items(), app.theme())
                 .map(Message::LinkClicked)).height(560.0);
             let idc_to_notes = button(text(t!("to_notes"))).on_press(Message::AnswerToNotes);
+            let idc_stop = button_nft!("\u{f073a}", t!("cancel"), AiStop);
             let idr_answer = row![idc_answer].padding(win.padding).spacing(win.spacing);
-            column![container(idr_mode).style(container::bordered_box).width(380.0), idr_prompts, idr_prompts2, space::vertical(), idr_answer, idc_to_notes].padding(win.padding_frame).align_x(iced::Alignment::Center)
+            column![id_mode, idr_prompts, idr_prompts2, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), row![idc_to_notes, idc_stop].spacing(win.spacing) ]
+                .padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
         SidebarMode::Dictionary => {
             let idc_result = scrollable(markdown::view(app.result_text.items(), app.theme())
@@ -205,7 +209,7 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
             let idc_dtn = checkbox(app.dtn_append).on_toggle(Message::DictionaryToNotesAppend);
             let idr_buttons = row![idc_copy, idc_to_notes, idc_dtn, text_nf!("\u{f4d0}")].padding(win.padding).spacing(win.spacing);
             
-            column![container(idr_mode).style(container::bordered_box).width(380.0), idc_result, space::vertical(), idr_buttons].padding(win.padding_frame).align_x(iced::Alignment::Center)
+            column![id_mode, idc_result, space::vertical(), idr_buttons].padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
         SidebarMode::Anki => {
             let idc_result = scrollable( markdown( app.anki_result.items(), app.theme() )
@@ -213,7 +217,7 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
                 .width(330.0)
                 .height(640.0);
             column![
-                container(idr_mode).style(container::bordered_box).width(380.0),
+                id_mode,
                 row![idc_result],
                 space::vertical(),
             ].padding(win.padding_frame).align_x(iced::Alignment::Center)

@@ -6,6 +6,7 @@ use crate::ai::ChatEvent;
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType, TextExtractorType};
 
+#[derive(Clone,Debug)]
 pub enum FileToDl {
     Det,
     Rec,
@@ -57,6 +58,7 @@ pub enum Message {
     AiRoleChanged(String),
     AiProviderChange(crate::config::Provider),
     NewAi,
+    AiStop,
 
     SidebarModeChanged(super::SidebarMode),
 
@@ -101,6 +103,7 @@ pub enum Message {
 
     UpdateProgress,
 
+    DownloadFile(FileToDl),
     DlEvent(crate::ocr::dl::DlEvent),
 
     #[cfg(feature = "scraper")]
