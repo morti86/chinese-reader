@@ -21,10 +21,7 @@ Deepl requires to set up a free API key on Deepl website. You can then translate
 
 ## AI
 
-Either subscribe to one of the supported providers to get an API key or set up a local Ollama chat. Local models that work best for the goal:
-
-- gemma3 27b
-- Qwen3.5 27b
+Either subscribe to one of the supported providers to get an API key or set up a local Ollama chat. Among local models, Gemma4 is recommended for this task.
 
 The functions available:
 

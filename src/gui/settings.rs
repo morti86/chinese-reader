@@ -211,17 +211,6 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
             
             column![id_mode, idc_result, space::vertical(), idr_buttons].padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
-        SidebarMode::Anki => {
-            let idc_result = scrollable( markdown( app.anki_result.items(), app.theme() )
-                .map(Message::LinkClicked))
-                .width(330.0)
-                .height(640.0);
-            column![
-                id_mode,
-                row![idc_result],
-                space::vertical(),
-            ].padding(win.padding_frame).align_x(iced::Alignment::Center)
-        }
     }
 }
 

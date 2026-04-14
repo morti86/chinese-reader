@@ -1,11 +1,13 @@
 use rusqlite::{Connection, Row};
-use std::{collections::HashMap, fmt};
+use std::{collections::{HashMap, HashSet}, fmt};
 use rayon::prelude::*;
-use tracing::debug;
+use tracing::{debug, warn};
 use std::collections::BTreeMap;
-use crate::utils::is_chinese_char;
+use crate::{anki::AnkiEntry, utils::is_chinese_char};
+use crate::error::ReaderResult;
 
 type Dupa<T> = Result<T, Box<dyn std::error::Error>>;
+pub const HSK_TOTAL: [f32; 7] = [477.0, 736.0, 940.0, 971.0, 1056.0, 1076.0, 5301.0];
 
 #[derive(Clone, Debug)]
 pub struct Entry {
@@ -17,6 +19,7 @@ pub struct Entry {
     chr: bool,
     idx: char,
     link: Option<String>,
+    anki: Option<crate::anki::AnkiEntry>,
 }
 
 impl Entry {
@@ -33,6 +36,7 @@ impl Entry {
             chr,
             idx,
             link: None,
+            anki: None,
         }
     }
 
@@ -66,9 +70,10 @@ impl Entry {
             .reduce(|acc,a| format!("{}\n- {}",acc,a));
 
         let hsk = if self.hsk.is_some() { format!("HSK{}", self.hsk.unwrap()) } else { String::new() };
+        let anki = if self.anki.is_some() { " (A) " } else { "" };
         match meanings {
             None => format!("Error formatting meanings!"),
-            Some(meanings) => format!("\n## {} | {}\n *{}*\n {}\n- {}", self.sim, self.tra, self.pin, hsk, meanings )
+            Some(meanings) => format!("\n## {} | {}\n *{}* {}\n {}\n- {}", self.sim, self.tra, self.pin, hsk, anki, meanings )
         }
     }
 
@@ -99,10 +104,11 @@ impl fmt::Display for Entry {
 pub struct Cedict {
     data_t: BTreeMap<char, Vec<Entry>>,
     data_hsk: HashMap<u32,Vec<Entry>>,
+    anki: HashSet<AnkiEntry>,
 }
 
 impl Cedict {
-    pub fn new(fname: &str) -> Dupa<Self> {
+    pub fn new(fname: &str, anki_fname: &Option<String>) -> Dupa<Self> {
         let path = format!("/usr/share/cnreader/{}",fname);
         let conn = match std::fs::exists(&path) {
             Ok(true) => {
@@ -119,9 +125,30 @@ impl Cedict {
         let mut data_t: BTreeMap<char, Vec<Entry>> = BTreeMap::new();
         let mut data_hsk: HashMap<u32, Vec<Entry>> = HashMap::new();
         let mut data_tr = st.query([])?;
+
+        debug!("Querying Anki");
+
+        let anki = if let Some(anki_fname) = anki_fname
+            && let Ok(true) = std::fs::exists(anki_fname) {
+            let anki_conn = Connection::open_with_flags(anki_fname, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY);
+            match anki_conn {
+                Ok(aconn) => crate::anki::anki_words_entry(&aconn)?,
+                Err(e) => {
+                    warn!("Error connecting Anki: {}", e);
+                    HashSet::new()
+                }
+            }
+        } else {
+            warn!("Empty Anki!");
+            HashSet::new()
+        };
+
+        debug!("Anki base loaded: {}", anki.len());
+
         while let Ok(next) = data_tr.next() {
             if let Some(row) = next {
-                let e = Entry::from_row(row);
+                let mut e = Entry::from_row(row);
+                e.anki = anki.iter().find(|x| x.word.eq(&e.sim)).cloned();
                 let k = e.index();
                 if let Some(hsk) = e.hsk {
                     data_t.entry(k).or_default().push(e.clone());
@@ -130,12 +157,16 @@ impl Cedict {
                     data_t.entry(k).or_default().push(e);
                 }
             } else {
+                warn!("Row with problems!");
                 break;
             }
         }
+
+
         Ok(Self { 
             data_t,
             data_hsk,
+            anki,
         })
     }
 
@@ -193,32 +224,18 @@ impl Cedict {
         vec![]
     }
 
-    /// List all entries that are in Anki and have HSK level
-    pub fn get_hsk_anki_lists(&self, anki_conn: &Connection) -> HashMap<u32, Vec<&Entry>> {
-        self.data_hsk.iter()
-            .map(|(&hsk,list)| (
-                    hsk,
-                    list.iter().filter_map(|e| {
-                if let Ok(true) = crate::anki::find_anki(anki_conn, &e.sim)  {
-                    Some(e)
-                } else { 
-                    None
-                }
-            }).collect::<Vec<_>>())
-            ).collect::<HashMap<_,Vec<_>>>()
+    /// How many entries that are in Anki for each HSK level there are?
+    pub fn count_hsk_anki(&self) -> HashMap<u32, usize> {
+        self.data_hsk.par_iter()
+            .map(|(hsk, e)| (*hsk, e.iter().filter(|x| x.anki.is_some()).count() ) )
+            .collect()
     }
 
-    /// List all entries that are in Anki
-    pub fn get_anki_lists(&self, anki_conn: &Connection) -> Vec<&Entry> {
-        self.data_t.iter()
-            .map(|(_,list)| list.iter().filter_map(|e| {
-                if let Ok(true) = crate::anki::find_anki(anki_conn, &e.sim)  {
-                    Some(e)
-                } else { 
-                    None
-                }
-            }).collect::<Vec<_>>()
-            ).flatten().collect()
+    /// How many entries that are for each HSK level there are?
+    pub fn count_hsk(&self) -> HashMap<u32, usize> {
+        self.data_hsk.par_iter()
+            .map(|(hsk, e)| (*hsk, e.len()) )
+            .collect()
     }
 
 }

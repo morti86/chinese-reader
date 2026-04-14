@@ -25,7 +25,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use message::Message;
 
-make_enum!(SidebarMode, [AI, Notes, Dictionary, Anki]);
+make_enum!(SidebarMode, [AI, Notes, Dictionary]);
 make_enum!(TextOption, [Load, Save, Add, New, Delete]);
 
 #[derive(Clone, Debug, PartialEq)]
@@ -94,7 +94,6 @@ pub struct App {
     #[cfg(feature = "scraper")]
     scraper_single: bool,
 
-    anki_result: markdown::Content,
     text_mode: TextMode,
     sc_new: bool,
 
@@ -198,6 +197,12 @@ impl App {
 
         debug!("OCR models dir {}", models_dir);
 
+        let anki_fname = conf.anki.clone();
+        let cedict = Cedict::new("dict.db", &anki_fname);
+        if let Err(e) = &cedict {
+            error!("Cedict error: {}", e);
+        }
+
         Self {
             conf,
             state: AppState::Default,
@@ -213,7 +218,7 @@ impl App {
 
             image_data: Arc::new(RwLock::new(vec![])),
             loaded_text: crate::textbase::Document::default(),
-            cedict: Cedict::new("dict.db").ok(),
+            cedict: cedict.ok(),
 
             new_ai: None,
             chat_history: vec![],
@@ -243,7 +248,6 @@ impl App {
             #[cfg(feature = "scraper")]
             scraper_single: false,
 
-            anki_result: markdown::Content::new(),
             text_mode: TextMode::Raw,
             text_md: markdown::Content::new(),
             sc_new: false,
@@ -532,14 +536,6 @@ impl App {
                     //self.sidebar_notes = text_editor::Content::new();
                 }
 
-            }
-            Message::AnkiResUpdate(v) => {
-                self.anki_result = markdown::Content::new();
-                v.iter().for_each(|x| {
-                    let x = x.trim();
-                    let item = format!("\n- [{}](c:{})", x, x);
-                    self.anki_result.push_str(item.as_str());
-                });
             }
             Message::AiUrlChange(url) => {
                 if let Some(c) = self.new_ai.as_mut() {

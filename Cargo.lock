@@ -786,7 +786,7 @@ dependencies = [
 
 [[package]]
 name = "cnreader"
-version = "1.0.7"
+version = "1.0.8"
 dependencies = [
  "async-channel",
  "async-trait",

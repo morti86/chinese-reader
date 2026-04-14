@@ -1,17 +1,26 @@
 use std::collections::HashSet;
 use chrono::{DateTime, Days, Utc};
 use rusqlite::Connection;
+use tracing::debug;
 use std::fmt;
 
 use crate::error::ReaderResult;
 
-pub const HSK_TOTAL: [f32; 7] = [477.0, 736.0, 940.0, 971.0, 1056.0, 1076.0, 5301.0];
 
 #[derive(Debug,Clone,PartialEq)]
 pub struct AnkiEntry {
-    word: String,
+    pub word: String,
     deck: i64,
     added: DateTime<Utc>,
+    deck_name: String,
+}
+
+impl Eq for AnkiEntry {}
+
+impl std::hash::Hash for AnkiEntry {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        state.write(self.word.as_bytes());
+    }
 }
 
 impl AnkiEntry {
@@ -23,6 +32,7 @@ impl AnkiEntry {
             word: word.to_string(),
             added,
             deck: did,
+            deck_name: String::new(),
         }
     }
 }
@@ -71,7 +81,6 @@ pub fn find_anki(conn: &Connection, sel: &str) -> ReaderResult<bool> {
     Ok(exists)
 }
 
-
 pub fn count_anki(conn: &Connection) -> ReaderResult<i64> {
     let res = conn.query_row("SELECT COUNT(*) FROM notes",
         [], |row| row.get(0) )?;
@@ -88,6 +97,43 @@ pub fn anki_chars(conn: &Connection) -> ReaderResult<HashSet<char>> {
         let r: String = row?;
         r.chars().for_each(|c| { results.insert(c); } );
     }
+    Ok(results)
+}
+
+pub fn anki_words(conn: &Connection) -> ReaderResult<HashSet<String>> {
+    let mut st = conn.prepare("SELECT REPLACE(sfld, CHAR(10), ' ') FROM notes")?;
+    let rows = st.query_map([], |row| row.get(0) )?;
+    let mut results = HashSet::<String>::new();
+    for row in rows {
+        results.insert(row?);
+    }
+    Ok(results)
+}
+
+pub fn anki_words_entry(conn: &Connection) -> ReaderResult<HashSet<AnkiEntry>> {
+    //let mut st = conn.prepare("SELECT id,did,REPLACE(sfld, CHAR(10), ' ') FROM notes N JOIN  WHERE id > ?")?;
+    let mut st = conn.prepare(
+            r#"
+            SELECT N.id,C.did,REPLACE(N.sfld, CHAR(10), ' '),D.name 
+            FROM cards C 
+            JOIN notes N ON C.nid = N.id
+            JOIN decks D ON C.did = D.id
+            "#
+        )?;
+    let rows = st.query_map([], |row| {
+        let id: i64 = row.get(0)?;
+        let deck: i64 = row.get(1)?;
+        let word: String = row.get(2)?;
+        let deck_name: String = row.get(3)?;
+        Ok(AnkiEntry { word, deck, added: DateTime::from_timestamp_millis(id).unwrap_or(DateTime::<Utc>::MIN_UTC), deck_name })
+    })?;
+    let mut results = HashSet::<AnkiEntry>::new();
+    let mut rows_count: usize = 0;
+    for row in rows {
+        results.insert(row?);
+        rows_count = rows_count + 1;
+    }
+    debug!("Rows: {}", rows_count);
     Ok(results)
 }
 
