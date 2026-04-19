@@ -23,6 +23,7 @@ pub enum Message {
     Settings,
     SettingsSave,
     SaveDone,
+    AnkiStats,
 
     EditAction(text_editor::Action),
     TextAction(super::TextOption),
@@ -59,6 +60,9 @@ pub enum Message {
     AiProviderChange(crate::config::Provider),
     NewAi,
     AiStop,
+    AiOllamaKeepAlive,
+    AiOllamaKeepAliveRes(bool),
+    AiOllamaKeepAliveModal{ msg: String, ka: bool },
 
     SidebarModeChanged(super::SidebarMode),
 
@@ -90,12 +94,9 @@ pub enum Message {
     PromptExplain,
     PromptGrammar,
     PromptSummary,
+    PromptTranslate,
 
     FontSizeChange(f32),
-    DeeplKeyChange(String),
-
-    Deepl,
-
     LoadImage,
     LoadImageFile,
     SetImage(Vec<u8>),
@@ -125,7 +126,7 @@ pub enum Message {
     #[cfg(feature = "scraper")]
     ScraperCurrentFile,
 
-    Language(crate::config::Language),
+    Language(String),
 
     AppDataChanged(String),
     AnkiResUpdate(Vec<String>),

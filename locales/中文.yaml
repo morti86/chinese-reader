@@ -83,4 +83,4 @@ prompt_examples: 给出一些包含该单词的句子使用示例
 prompt_explain: 解释给定文本中{}的含义
 prompt_grammar: 解释句子{}的语法结构
 prompt_summary: 总结附加文本
-
+prompt_translate: 翻译{}到中文

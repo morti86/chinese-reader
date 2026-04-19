@@ -12,7 +12,7 @@ pub struct AnkiEntry {
     pub word: String,
     deck: i64,
     added: DateTime<Utc>,
-    deck_name: String,
+    pub deck_name: String,
 }
 
 impl Eq for AnkiEntry {}
@@ -116,15 +116,15 @@ pub fn anki_words_entry(conn: &Connection) -> ReaderResult<HashSet<AnkiEntry>> {
             r#"
             SELECT N.id,C.did,REPLACE(N.sfld, CHAR(10), ' '),D.name 
             FROM cards C 
-            JOIN notes N ON C.nid = N.id
-            JOIN decks D ON C.did = D.id
+            LEFT JOIN notes N ON C.nid = N.id
+            LEFT JOIN decks D ON C.did = D.id
             "#
         )?;
     let rows = st.query_map([], |row| {
         let id: i64 = row.get(0)?;
-        let deck: i64 = row.get(1)?;
+        let deck: i64 = row.get(1).unwrap_or(0);
         let word: String = row.get(2)?;
-        let deck_name: String = row.get(3)?;
+        let deck_name: String = row.get(3).unwrap_or_default();
         Ok(AnkiEntry { word, deck, added: DateTime::from_timestamp_millis(id).unwrap_or(DateTime::<Utc>::MIN_UTC), deck_name })
     })?;
     let mut results = HashSet::<AnkiEntry>::new();

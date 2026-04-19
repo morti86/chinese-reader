@@ -88,3 +88,4 @@ prompt_examples: Geben Sie einige Anwendungsbeispiele von Sätzen mit dem Wort
 prompt_explain: Erklären Sie die Bedeutung von {} im gegebenen Text
 prompt_grammar: Erklären Sie die grammatikalische Struktur des Satzes {}
 prompt_summary: Fassen Sie den angehängten Text zusammen
+prompt_translate: Übersetze {} ins Deutsche

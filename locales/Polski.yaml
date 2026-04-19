@@ -86,3 +86,4 @@ prompt_examples: Podaj kilka przykładów użycia słowa
 prompt_explain: Wyjaśnij znaczenie {} w podanym tekście
 prompt_grammar: Wyjaśnij strukturę gramatyczną zdania {}
 prompt_summary: Napisz podsumowanie załączonego tekstu
+prompt_translate: Przetłumacz {} na język polski

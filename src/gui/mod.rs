@@ -1,7 +1,7 @@
 mod settings;
 pub mod message;
 
-use crate::ai::{CancellationToken, ChatCommand, ChatEvent, ask_deepl};
+use crate::ai::{CancellationToken, ChatCommand, ChatEvent};
 use crate::cedict::Cedict;
 use crate::error::ReaderError;
 use crate::ocr::dl::{DlCommand, DlEvent};
@@ -44,6 +44,7 @@ pub enum AppState {
     #[cfg(feature = "scraper")]
     Scraper,
     Notes,
+    AnkiStats,
     FileDl,
 }
 
@@ -104,6 +105,8 @@ pub struct App {
     
     dl_dest: String,
     dl_prog: f32,
+
+    ollama_alive: bool,
 }
 
 impl Default for App {
@@ -259,6 +262,8 @@ impl App {
 
             dl_dest: String::new(),
             dl_prog: 0.0,
+
+            ollama_alive: false,
         }
     }
 
@@ -306,6 +311,9 @@ impl App {
             }
             AppState::FileDl => {
                 settings::files_dl(self).into()
+            }
+            AppState::AnkiStats => {
+                settings::anki_stats(self).into()
             }
         }
     }
@@ -680,8 +688,8 @@ impl App {
                 self.conf.window.theme = th.to_string();
             }
             Message::Language(lang) => {
-                self.conf.window.lang = Some(lang);
-                rust_i18n::set_locale(&lang.to_string());
+                self.conf.window.lang = Some(lang.clone());
+                rust_i18n::set_locale(&lang);
             }
             Message::Simplified => {
                 if let Some(cedict) = &self.cedict {
@@ -767,6 +775,14 @@ impl App {
                 let question = t!("prompt_usage").to_string();
                 return self.do_prompt(question.as_str(), false);
             }
+            Message::PromptTranslate => {
+                self.answer_raw = String::new();
+                self.answer_text = markdown::Content::new();
+
+                let question = t!("prompt_translate").to_string();
+                return self.do_prompt(question.as_str(), false);
+            }
+
             Message::DictionaryCopy => {
                 debug!("Copying: {}", self.result_raw);
                 return clipboard::write(self.result_raw.clone());
@@ -994,25 +1010,6 @@ impl App {
                     return iced::Task::done(Message::ShowModal(e.to_string()));
                 }
                 return iced::Task::done(Message::Notes);
-            }
-            Message::DeeplKeyChange(key) => {
-                self.conf.keys.deepl = key;
-            }
-            Message::Deepl => {
-                let text = self.text.selection();
-                let lang = self.conf.window.lang();
-                let key = self.conf.keys.deepl.clone();
-                if let Some(text) = text {
-                    return iced::Task::perform(async move {
-                        let r = ask_deepl(text.as_str(), lang, key.as_str()).await;
-                        r.map(|r| format!("{} - {}", text, r))
-                    }, |r| {
-                        match r {
-                            Ok(r) => Message::SetResult(r),
-                            Err(e) => Message::ShowModal(e.to_string()),
-                        }
-                    });
-                }
             }
             Message::NewTextCheck(n) => {
                 self.new_text = n;
@@ -1252,6 +1249,41 @@ impl App {
                 }
 
             }
+            Message::AiOllamaKeepAlive => {
+                if let Some(c) = self.conf.get_ai_config() {
+                    let model = c.model.clone();
+                    let url = c.url.clone().unwrap_or_default();
+                    self.ollama_alive = !self.ollama_alive;
+                    if self.ollama_alive {
+                        return iced::Task::perform(async move {
+                            crate::ai::ollama::load_model_indefinitely(&url, &model).await
+                        }, |r| {
+                            match r {
+                                Ok(_) => Message::AiOllamaKeepAliveRes(true),
+                                Err(e) => Message::AiOllamaKeepAliveModal { msg: e.to_string(), ka: false },  //Message::ShowModal(e.to_string()),
+                            }
+                        });
+                    } else {
+                        return iced::Task::perform(async move {
+                            crate::ai::ollama::unload_model(&url, &model).await
+                        }, |r| {
+                            match r {
+                                Ok(_) => Message::AiOllamaKeepAliveRes(false),
+                                Err(e) => Message::AiOllamaKeepAliveModal { msg: e.to_string(), ka: true },  //Message::ShowModal(e.to_string()),
+                            }
+                        });
+
+                    }
+                }
+            }
+            Message::AiOllamaKeepAliveRes(ka) => {
+                debug!("Keep alive: {}", ka);
+                self.ollama_alive = ka;
+            }
+            Message::AiOllamaKeepAliveModal{ msg, ka } => {
+                self.ollama_alive = ka;
+                self.state = AppState::Modal(msg);
+            }
             Message::NotesExport => {
                 if let Ok(result) = export_notes(&self.doc_conn, self.loaded_text.id)
                     && let Some(f) = rfd::FileDialog::new().save_file() {
@@ -1274,6 +1306,9 @@ impl App {
                         }
                     });
                 }
+            }
+            Message::AnkiStats => {
+                self.state = AppState::AnkiStats;
             }
             Message::Void => {}
             _ => {},

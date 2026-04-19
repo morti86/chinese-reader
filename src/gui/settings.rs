@@ -1,7 +1,8 @@
 use iced::advanced::text::highlighter::PlainText;
 use iced::widget::{Column, Row, TextEditor, button, checkbox, column, container, markdown, pick_list, progress_bar, row, scrollable, slider, space, table, text, text_editor, text_input, tooltip};
 use iced::{Alignment, Element, Font, Padding, Renderer, Theme};
-use crate::config::{Language, Provider, Window};
+use crate::cedict::HSK_TOTAL;
+use crate::config::{Provider, Window};
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType,TextExtractorType};
 use crate::utils::get_models;
@@ -9,7 +10,7 @@ use super::message::Message;
 use super::SidebarMode;
 use super::TextOption;
 use std::path::Path;
-use tracing::info;
+use tracing::{debug, info};
 
 macro_rules! button_nf {
     ($text:expr) => {
@@ -183,18 +184,22 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
                 .on_press(Message::PromptGrammar);
             let idc_examples = button(text(t!("ai_examples")))
                 .on_press(Message::PromptUsage);
-            let idr_prompts = row![idc_meaning, idc_explain, idc_grammar, idc_examples].spacing(win.spacing).padding(win.padding);
+            let idc_translate = button_nf!("\u{f02bf}").on_press(Message::PromptTranslate);
+            let idr_prompts = row![idc_meaning, idc_explain, idc_grammar].spacing(win.spacing).padding(win.padding);
 
             let idc_summary = button(text(t!("summary")))
                 .on_press(Message::PromptSummary);
-            let idr_prompts2 = row![idc_summary].spacing(win.spacing).padding(win.padding);
+            let idr_prompts2 = row![idc_examples, idc_summary, idc_translate].spacing(win.spacing).padding(win.padding);
 
             let idc_answer = scrollable(markdown::view(app.answer_text.items(), app.theme())
                 .map(Message::LinkClicked)).height(560.0);
             let idc_to_notes = button(text(t!("to_notes"))).on_press(Message::AnswerToNotes);
             let idc_stop = button_nft!("\u{f073a}", t!("cancel"), AiStop);
             let idr_answer = row![idc_answer].padding(win.padding).spacing(win.spacing);
-            column![id_mode, idr_prompts, idr_prompts2, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), row![idc_to_notes, idc_stop].spacing(win.spacing) ]
+
+            let is_ollama = if let Some(c) = app.conf.get_ai_config() && c.provider == Provider::Ollama { Some(Message::AiOllamaKeepAlive) } else { None };
+            let idc_ka = (if app.ollama_alive { button_nf!("\u{f205}") } else { button_nf!("\u{f204}") }).on_press_maybe(is_ollama);
+            column![id_mode, idr_prompts, idr_prompts2, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), row![idc_to_notes, idc_stop, idc_ka].spacing(win.spacing) ]
                 .padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
         SidebarMode::Dictionary => {
@@ -241,6 +246,13 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
     let idc_ocr = button_nf!("\u{f113a}")
         .on_press_maybe(if is_img && ocr_enabled { Some(Message::Ocr) } else { None });
     let idc_notes = button_nft!("\u{f1a7d}", t!("to_notes"), Notes);
+    let anki_acc = if let Some(cd) = app.cedict.as_ref()
+        && cd.anki_len() > 0 {
+            Some(Message::AnkiStats)
+    } else {
+        None
+    };
+    let idc_anki_db = button_nf!("\u{f1c0}").on_press_maybe(anki_acc);
     
     #[cfg(feature = "scraper")]
     let idr_left_top = row![
@@ -254,6 +266,7 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
         idc_scraper, 
         idc_ocr,
         idc_notes,
+        idc_anki_db,
     ].padding(win.padding_frame).spacing(win.spacing);
 
     #[cfg(not(feature = "scraper"))]
@@ -267,6 +280,7 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
         idc_img_clear, 
         idc_ocr,
         idc_notes,
+        idc_anki_db,
     ].padding(win.padding_frame).spacing(win.spacing);
 
     let idc_title = row![
@@ -291,15 +305,10 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
         };    
     let idc_simplified = button(text(t!("simplified"))).on_press(Message::Simplified);
 
-    let deepl_enabled = !conf.keys.deepl.is_empty();
-    let deepl_action = if deepl_enabled { Some(Message::Deepl) } else { None };
-    let idc_deepl = button_nf!("\u{f05ca}")
-        .on_press_maybe(deepl_action);
-
     let idc_save_prog = button_nf!("\u{eb4a}")
         .on_press(Message::UpdateProgress);
 
-    let idr_buttons = row![idc_simplified, idc_deepl, idc_save_prog].padding(win.padding_frame).spacing(win.spacing);
+    let idr_buttons = row![idc_simplified, idc_save_prog].padding(win.padding_frame).spacing(win.spacing);
 
     let cursor = app.position;
     let (line,column) = (cursor.line, cursor.column);
@@ -411,17 +420,14 @@ pub fn settings<'a>(app: &super::App) -> Element<'a, Message> {
     let idr_theme = row![ids_theme, idc_theme].padding(win.padding).spacing(win.spacing);
 
     let ids_lang = text(t!("language")).width(win.settings_label_w);
-    let idc_lang = pick_list(Language::ALL, win.lang, Message::Language).text_shaping(text::Shaping::Advanced);
+    let r = rust_i18n::available_locales!().iter().map(|x| x.to_string()).collect::<Vec<_>>();
+    let idc_lang = pick_list(r, win.lang.clone(), Message::Language).text_shaping(text::Shaping::Advanced);
     let idr_lang = row![ids_lang, idc_lang].padding(win.padding).spacing(win.spacing);
 
     let fs = format!("{}: {}", t!("font_size"), win.font_size.unwrap_or(15.0));
     let ids_font_size = text(fs).width(win.settings_label_w);
     let idc_font_size = slider(12.0..=24.0, win.font_size.unwrap_or(15.0), Message::FontSizeChange).step(0.5);
     let idr_font_size = row![ids_font_size, idc_font_size].padding(win.padding).spacing(win.spacing);
-
-    let ids_deepl = text(t!("deepl_key")).width(win.settings_label_w);
-    let idc_deepl = text_input("", &app.conf.keys.deepl).on_input(Message::DeeplKeyChange);
-    let idr_deepl = row![ids_deepl, idc_deepl].padding(win.padding).spacing(win.spacing);
 
     let ids_anki = text("Anki db").width(win.settings_label_w);
     let anki = app.conf.anki.clone().unwrap_or_default();
@@ -443,7 +449,6 @@ pub fn settings<'a>(app: &super::App) -> Element<'a, Message> {
         text(""),
         idr_font_size,
         idr_anki,
-        idr_deepl,
         idr_appdata,
         iced::widget::rule::horizontal(2.0),
         idr_b
@@ -471,6 +476,7 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
     let idc_ai_chat: Element<'a, Message> = if is_new { text("").into() } else {
         pick_list(conf.get_ai_chats(),ai_chat.clone(), Message::AiChatSelected).into()
     };
+
     let idr_ai_select = row![idc_ai_select, idc_ai_chat].spacing(conf.window.spacing);
     let is_ai_selected = ai_chat.is_some();
 
@@ -600,8 +606,23 @@ pub fn scrapper<'a>(app: &'a super::App) -> Column<'a, Message> {
 pub fn anki_stats<'a>(app: &'a super::App) -> Column<'a, Message> {
     let conf = &app.conf;
     let win = &conf.window;
-
-
+    let cedict = app.cedict.as_ref();
+    if let Some(cd) = cedict {
+        let hsk: Vec<usize> = cd.count_hsk_anki().iter().map(|(_,h)| *h).collect();
+        let total = cd.anki_len();
+        debug!("hsk: {:?} / {}", hsk, cd.data_hsk_len());
+        return column![
+            row![text(format!("HSK1: {:5} / {:5}", hsk[0], HSK_TOTAL[0] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[0] as f32), hsk[0] as f32) ].spacing(win.spacing),
+            row![text(format!("HSK2: {:5} / {:5}", hsk[1], HSK_TOTAL[1] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[1] as f32), hsk[1] as f32) ].spacing(win.spacing),
+            row![text(format!("HSK3: {:5} / {:5}", hsk[2], HSK_TOTAL[2] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[2] as f32), hsk[2] as f32) ].spacing(win.spacing),
+            row![text(format!("HSK4: {:5} / {:5}", hsk[3], HSK_TOTAL[3] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[3] as f32), hsk[3] as f32) ].spacing(win.spacing),
+            row![text(format!("HSK5: {:5} / {:5}", hsk[4], HSK_TOTAL[4] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[4] as f32), hsk[4] as f32) ].spacing(win.spacing),
+            row![text(format!("HSK6: {:5} / {:5}", hsk[5], HSK_TOTAL[5] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[5] as f32), hsk[5] as f32) ].spacing(win.spacing),
+            row![text(format!("HSK7: {:5} / {:5}", hsk[6], HSK_TOTAL[6] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[6] as f32), hsk[6] as f32) ].spacing(win.spacing),
+            row![text(format!("total anki: {}", total))],
+            button_nf!("\u{f015c}").on_press(Message::Close)
+            ].padding(win.padding_frame).spacing(win.spacing).align_x(iced::Alignment::Center);
+    }
 
     column![
         button_nf!("\u{f015c}").on_press(Message::Close)

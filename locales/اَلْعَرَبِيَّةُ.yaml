@@ -1,0 +1,91 @@
+ocr: التعرف الضوئي على الحروف
+load_file: تحميل ملف صورة
+clipboard: الحافظة
+paste_here: لصق النص هنا
+load: تحميل
+save: حفظ
+ai_select: اختيار دردشة الذكاء الاصطناعي
+ask_ai: سؤال الذكاء الاصطناعي
+name: الاسم
+url: الرابط
+provider: المزود
+model: النموذج
+notes_placeholder: ملاحظات هنا
+theme: المظهر
+cancel: إلغاء
+language: اللغة
+ok: موافق
+mode: 'الوضع '
+settings_ai: إعدادات الذكاء الاصطناعي
+settings: الإعدادات
+new: جديد
+add_note: إضافة ملاحظة
+delete_note: حذف ملاحظة
+image_status: 'حالة الصورة: '
+none: لم يتم التحميل
+enter_model: إدخال اسم النموذج
+ai_key: مفتاح واجهة برمجة التطبيقات
+ai_role: الدور
+load_text: تحميل النص
+select_text: تحديد النص
+save_text: حفظ النص
+text_name: الاسم
+delete_text: حذف النص
+font_size: حجم الخط
+ai_preamble: مقدمة
+to_notes: إلى الملاحظات
+copy: نسخ
+add_text: إضافة نص
+ocr_file: ملف OCR
+deepl_key: مفتاح DeepL API
+eleven_key: مفتاح Elevenlabs API
+simplified: إلى المبسط
+restart_needed: ستصبح التغييرات سارية المفعول بعد إعادة التشغيل
+cursor: 'المؤشر: السطر {} الحرف {}'
+deepl: DeepL
+ai_meaning: المعنى
+ai_examples: الأمثلة
+ai_explain: شرح
+ai_grammar: القواعد
+load_img: صورة من الحافظة
+clear_img: صورة
+save_prog: حفظ التقدم
+ndims: عدد الأبعاد
+max_docs: الحد الأقصى لعدد المستندات
+emb_mod: نموذج التضمين
+appdata: ملف قاعدة بيانات النصوص
+summary: الملخص
+scraper: أداة الكشط
+scraper_d: يمكن لأداة الكشط محاولة استرداد كتاب من مواقع مثل ttkan.co. فقط الصق
+  رابط الصفحة الرئيسية للكتاب
+sc_file: اسم الملف للحفظ
+sc_c_min: الفصل من
+sc_c_max: الفصل إلى
+sc_sleep: فاصل التنزيل
+start: بدء
+sc_url: الرابط
+stop: إيقاف
+sc_single: صفحة واحدة
+sc_current: الملف الحالي
+e_pattern: النمط
+e_chapters: الفصول
+e_type: النوع
+e_tp: محدد العنوان
+e_lt: مستخلصات الروابط/النص
+no_text: لم يتم تحميل أي نص
+line: السطر
+column: العمود
+text: النص
+sc_warn: أداة الكشط هي أداة التنزيل التلقائي للكتب الكاملة المقسمة
+  إلى فصول. لا تحب المواقع أداة الكشط وتميل إلى حظر مستخدميها،
+  لذا استخدمها بحذر. تقليل الفاصل يجعل أداة الكشط أسرع، ولكنه
+  يجعلك أكثر عرضة للحظر.
+p_meaning: شرح المعنى والاستخدام
+p_explain: شرح (مع السياق)
+prompt_meaning: اشرح معنى واستخدام الكلمة {}
+prompt_examples: أعطِ بعض الأمثلة على استخدام الجمل التي تحتوي على الكلمة
+prompt_explain: اشرح معنى {} في النص المعطى
+prompt_grammar: اشرح البنية النحوية للجملة {}
+prompt_summary: لخص النص المرفق
+prompt_translate: ترجمة {} إلى العربية
+

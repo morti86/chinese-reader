@@ -87,3 +87,4 @@ prompt_examples: Donnez quelques exemples d'utilisation de phrases avec le mot
 prompt_explain: Expliquez la signification de {} dans le texte donné
 prompt_grammar: Expliquez la structure grammaticale de la phrase {}
 prompt_summary: Résumez le texte joint
+prompt_translate : Traduire {} en français

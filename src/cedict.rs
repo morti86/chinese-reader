@@ -6,7 +6,6 @@ use std::collections::BTreeMap;
 use crate::{anki::AnkiEntry, utils::is_chinese_char};
 use crate::error::ReaderResult;
 
-type Dupa<T> = Result<T, Box<dyn std::error::Error>>;
 pub const HSK_TOTAL: [f32; 7] = [477.0, 736.0, 940.0, 971.0, 1056.0, 1076.0, 5301.0];
 
 #[derive(Clone, Debug)]
@@ -40,8 +39,16 @@ impl Entry {
         }
     }
 
+    pub fn is_anki(&self) -> bool {
+        self.anki.is_some()
+    }
+
     pub fn index(&self) -> char {
         self.idx
+    }
+
+    pub fn deck(&self) -> Option<&String> {
+        self.anki.as_ref().map(|a| &a.deck_name)
     }
 
     pub fn to_md(&self) -> String {
@@ -70,7 +77,7 @@ impl Entry {
             .reduce(|acc,a| format!("{}\n- {}",acc,a));
 
         let hsk = if self.hsk.is_some() { format!("HSK{}", self.hsk.unwrap()) } else { String::new() };
-        let anki = if self.anki.is_some() { " (A) " } else { "" };
+        let anki = if let Some(anki) = &self.anki { &format!(" (anki:{}) ", anki.deck_name) } else { "" };
         match meanings {
             None => format!("Error formatting meanings!"),
             Some(meanings) => format!("\n## {} | {}\n *{}* {}\n {}\n- {}", self.sim, self.tra, self.pin, hsk, anki, meanings )
@@ -108,7 +115,7 @@ pub struct Cedict {
 }
 
 impl Cedict {
-    pub fn new(fname: &str, anki_fname: &Option<String>) -> Dupa<Self> {
+    pub fn new(fname: &str, anki_fname: &Option<String>) -> ReaderResult<Self> {
         let path = format!("/usr/share/cnreader/{}",fname);
         let conn = match std::fs::exists(&path) {
             Ok(true) => {
@@ -150,9 +157,9 @@ impl Cedict {
                 let mut e = Entry::from_row(row);
                 e.anki = anki.iter().find(|x| x.word.eq(&e.sim)).cloned();
                 let k = e.index();
+                data_t.entry(k).or_default().push(e.clone());
                 if let Some(hsk) = e.hsk {
-                    data_t.entry(k).or_default().push(e.clone());
-                    data_hsk.entry(hsk).and_modify(|x| x.push(e));
+                    data_hsk.entry(hsk).and_modify(|x| x.push(e.clone())).or_insert(vec![e]);
                 } else {
                     data_t.entry(k).or_default().push(e);
                 }
@@ -224,6 +231,10 @@ impl Cedict {
         vec![]
     }
 
+    pub fn data_hsk_len(&self) -> usize {
+        self.data_hsk.len()
+    }
+
     /// How many entries that are in Anki for each HSK level there are?
     pub fn count_hsk_anki(&self) -> HashMap<u32, usize> {
         self.data_hsk.par_iter()
@@ -236,6 +247,10 @@ impl Cedict {
         self.data_hsk.par_iter()
             .map(|(hsk, e)| (*hsk, e.len()) )
             .collect()
+    }
+
+    pub fn anki_len(&self) -> usize {
+        self.anki.len()
     }
 
 }

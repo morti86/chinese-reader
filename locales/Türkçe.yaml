@@ -87,3 +87,4 @@ prompt_examples: Kelime ile cümlelerin kullanım örnekleri ver
 prompt_explain: Verilen metindeki {} anlamını açıkla
 prompt_grammar: '{} cümlesinin dilbilgisi yapısını açıkla'
 prompt_summary: Ekli metni özetle
+prompt_translate: '{} yi Türkçeye çevir'

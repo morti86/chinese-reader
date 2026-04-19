@@ -48,6 +48,20 @@ macro_rules! modal {
 }
 
 #[macro_export]
+macro_rules! log_err {
+    {$e:expr} => {
+        if let Err(e) = $e {
+            error!("Error: {}", $e);
+        }
+    };
+    {$e:expr, $code:expr} => {
+        if let Err(e) = $e {
+            error!("Error[{}]: {}", $code, $e);
+        }
+    };
+}
+
+#[macro_export]
 macro_rules! make_enum {
     ($name:ident, [$op1:ident]) => {
         #[derive(Clone, Debug, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -155,6 +169,7 @@ macro_rules! make_enum {
             }
         }
     };
+
 }
 
 // Get image from clipboard

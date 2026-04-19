@@ -1,13 +1,13 @@
 [package]
 name = "cnreader"
-version = "1.0.8"
+version = "1.1.0"
 edition = "2024"
 
 [dependencies]
 rayon = "1.10.0"
 iced = { version = "0.14.*" , features=["tokio", "advanced","sipper","svg","markdown"] }
 tendril = "0.4.3"
-rig-core = { version = "0.31.0", features = ["derive", "image"] }
+rig-core = { version = "0.35.0", features = ["derive", "image"] }
 deepl = "0.6.5"
 tokio = { version = "1.45.1", features = ["full"] }
 rusqlite = { version = "0.38.0", features = ["bundled", "chrono"] }
@@ -18,7 +18,7 @@ serde = { version = "1.0.219", features = ["derive"] }
 toml = "1.0.3"
 rand = "0.10.0"
 async-channel = "2.5.*"
-reqwest = { version = "0.12.15", features = ["json", "stream"] }
+reqwest = { version = "0.13.2", features = ["json", "stream"] }
 image = "0.25.9"
 ndarray = { version = "0.17.2", features = ["serde", "blas"] }
 ort = "2.0.0-rc.11"
@@ -34,6 +34,7 @@ url = "2.5.7"
 rust-i18n = "3.1.5"
 dirs = "6.0.0"
 env = "1.0.1"
+serde_json = "1.0.149"
 
 [target.'cfg(target_family = "unix")'.dependencies]
 wl-clipboard-rs = "*"
@@ -50,8 +51,7 @@ scraper = ["dep:scraper"]
 [package.metadata.deb]
 assets = [
     # The binary itself
-    ["target/release/cnreader", "usr/bin/", "755"],
-    ["dict.db", "usr/share/cndict/", "644"],
+    ["target/release/cnreader", "dict.db"],
 ]
 # The section below defines system-level dependencies
 depends = "$auto, libssl3, libc6 >= 2.39"
@@ -63,3 +63,11 @@ maintainer = "Morti <you@example.com>"
 
 # Optional: Copyright file path
 copyright = "LICENSE"
+
+[package.metadata.appimage]
+assets = ["dict.db"]
+appname = "cnreader"
+exec = "cnreader"
+icon = "icon.png"
+categories = "Education;"
+terminal = false

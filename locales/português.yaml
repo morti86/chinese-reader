@@ -1,0 +1,89 @@
+ocr: OCR
+load_file: Carregar arquivo de imagem
+clipboard: Área de transferência
+paste_here: Colar aqui
+load: Carregar
+save: Salvar
+ai_select: Selecionar chat AI
+ask_ai: Perguntar ao AI
+name: Nome
+url: URL
+provider: Provedor
+model: Modelo
+notes_placeholder: Aqui para notas
+theme: Tema
+cancel: Cancelar
+language: Idioma
+ok: OK
+mode: 'Modo '
+settings_ai: Configurações AI
+settings: Configurações
+new: Novo
+add_note: Adicionar nota
+delete_note: Excluir nota
+image_status: 'Status da imagem: '
+none: Não carregada
+enter_model: Inserir nome do modelo
+ai_key: Chave API AI
+ai_role: Papel no sistema AI
+load_text: Carregar texto
+select_text: Selecionar texto
+save_text: Salvar texto
+text_name: Nome do texto
+delete_text: Excluir texto
+font_size: Tamanho da fonte
+ai_preamble: Preâmbulo AI
+to_notes: Para notas
+copy: Copiar
+add_text: Adicionar texto
+ocr_file: Arquivo OCR
+deepl_key: Chave API Deepl
+eleven_key: Chave API Elevenlabs
+simplified: Para versão simplificada
+restart_needed: As alterações entrarão em vigor após reinicialização
+cursor: 'Curador: linha {} caractere {}'
+deepl: Deepl
+ai_meaning: Significado
+ai_examples: Exemplos
+ai_explain: Explicar
+ai_grammar: Gramática
+load_img: Imagem da área de transferência
+clear_img: Limpar imagem
+saveProg: Salvar progresso
+ndims: Número de dimensões
+max_docs: Número máximo de documentos
+emb_mod: Modelo de incorporação
+appdata: Arquivo de banco de dados de texto
+summary: Resumo
+scraper: Ferramenta de raspagem
+scraper_d: Ferramenta de raspagem que pode tentar recuperar livros de sites como ttkan.co. Basta copiar
+  a URL da página principal do livro.
+sc_file: Nome para salvar o arquivo resultante
+sc_c_min: Capítulo inicial
+sc_c_max: Capítulo final
+sc_sleep: Intervalo de download
+start: Iniciar
+sc_url: URL da página
+stop: Parar
+sc_single: Página única
+sc_current: Arquivo atual
+e_pattern: Modelo padrão
+e_chapters: Capítulos
+e_type: Tipo
+e_tp: Selecionador de título
+e_lt: Extratores de links/texto
+no_text: Nenhum texto foi carregado
+line: Linha
+column: Coluna
+text: Texto
+sc.warn: A ferramenta de raspagem é usada para baixar automaticamente livros divididos em capítulos. Os sites não gostam disso e tendem a banir quem a usa,
+  portanto, use-a com cuidado. Diminuir o intervalo de download torna a ferramenta mais rápida, mas também aumenta o risco de ser banido.
+p_meaning: Explicar significado e uso
+p_explain: Explicar (com contexto)
+prompt_meaning: Explicar o significado e uso da palavra {}
+prompt_examples: Dar exemplos de uso da palavra em frases
+prompt_explain: Explicar o significado de {} no texto dado
+prompt_grammar: Explicar a estrutura gramatical da frase {}
+prompt_summary: Resumir o texto anexado
+prompt_translate: Traduzir {} para português
+

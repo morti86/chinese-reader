@@ -1,11 +1,10 @@
-use deepl::DeepLApi;
 use iced::task::{sipper, Never, Sipper};
 use rig::{message::Message as Rmsg, streaming::{ToolCallDeltaContent}};
 use tokio::sync::mpsc;
-use crate::{config::Language, error::ReaderResult};
 use tracing::{debug, info, warn};
 use crate::AGENT_NEW;
 pub mod manager;
+pub mod ollama;
 
 #[derive(Clone)]
 pub enum ChatCommand {
@@ -59,26 +58,4 @@ pub fn connect() -> impl Sipper<Never, ChatEvent> {
             }
         }
     })
-}
-
-impl Into<deepl::Lang> for Language {
-    fn into(self) -> deepl::Lang {
-        match self {
-            Language::English => deepl::Lang::EN_US,
-            Language::日本語 => deepl::Lang::JA,
-            Language::Polski => deepl::Lang::PL,
-            Language::Türkçe => deepl::Lang::TR,
-            Language::Deutsch => deepl::Lang::DE,
-            Language::Русский => deepl::Lang::RU,
-            Language::Español => deepl::Lang::ES,
-            Language::Italiano => deepl::Lang::IT,
-            Language::Française => deepl::Lang::FR,
-        }
-    }
-}
-
-pub async fn ask_deepl(text: &str, lang: Language, key: &str) -> ReaderResult<String> {
-    let api = DeepLApi::with(key).new();
-    let res = api.translate_text(text, lang.into()).await?;
-    Ok(res.to_string())
 }

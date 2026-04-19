@@ -1,0 +1,91 @@
+ocr: OCR
+load_file: 이미지 파일 로드
+clipboard: 클립보드
+paste_here: 여기에 텍스트 붙여넣기
+load: 로드
+save: 저장
+ai_select: AI 채팅 선택
+ask_ai: AI에게 묻기
+name: 이름
+url: URL
+provider: 제공자
+model: 모델
+notes_placeholder: 여기 메모
+theme: 테마
+cancel: 취소
+language: 언어
+ok: 확인
+mode: '모드 '
+settings_ai: AI 설정
+settings: 설정
+new: 새 항목
+add_note: 메모 추가
+delete_note: 메모 삭제
+image_status: '이미지 상태: '
+none: 로드되지 않음
+enter_model: 모델 이름 입력
+ai_key: API 키
+ai_role: 역할
+load_text: 텍스트 로드
+select_text: 텍스트 선택
+save_text: 텍스트 저장
+text_name: 이름
+delete_text: 텍스트 삭제
+font_size: 글꼴 크기
+ai_preamble: 서문
+to_notes: 메모로
+copy: 복사
+add_text: 텍스트 추가
+ocr_file: OCR 파일
+deepl_key: Deepl API 키
+eleven_key: Elevenlabs API 키
+simplified: 간체로
+restart_needed: 변경 사항은 재시작 후 적용됩니다
+cursor: '커서: 줄 {} 문자 {}'
+deepl: Deepl
+ai_meaning: 의미
+ai_examples: 예시
+ai_explain: 설명
+ai_grammar: 문법
+load_img: 클립보드에서 이미지
+clear_img: 이미지 지우기
+save_prog: 진행 상황 저장
+ndims: 차원 수
+max_docs: 최대 문서 수
+emb_mod: 임베딩 모델
+appdata: 텍스트 데이터베이스 파일
+summary: 요약
+scraper: 스크래퍼
+scraper_d: 스크래퍼는 ttkan.co와 같은 사이트에서 책을 가져오려고 시도할 수 있습니다. 책의 메인 페이지 URL을 붙여넣기만 하면 됩니다
+  (번역 중)
+sc_file: 저장할 파일 이름
+sc_c_min: 시작 장
+sc_c_max: 끝 장
+sc_sleep: 다운로드 간격
+start: 시작
+sc_url: URL
+stop: 정지
+sc_single: 단일 페이지
+sc_current: 현재 파일
+e_pattern: 패턴
+e_chapters: 장
+e_type: 유형
+e_tp: 제목 선택기
+e_lt: 링크/텍스트 추출기
+no_text: 텍스트가 로드되지 않았습니다
+line: 줄
+column: 열
+text: 텍스트
+sc_warn: 스크래퍼는 장으로 나뉜 전체 책을 자동으로 다운로드하는 도구입니다. 웹사이트는 스크래퍼를 싫어하고 사용자를 차단하려 합니다. 따라서 주의해서 사용하세요. 간격을 줄이면 스크래퍼가 더 빨라지지만 차단될 확률도 높아집니다.
+  (번역 중)
+  (번역 중)
+  (번역 중)
+p_meaning: 의미와 사용법 설명
+p_explain: (문맥 포함) 설명
+prompt_meaning: 단어 {}의 의미와 사용법을 설명해 주세요
+prompt_examples: 단어 {}를 사용한 문장 예시를 몇 개 주세요
+prompt_explain: 주어진 텍스트에서 {}의 의미를 설명해 주세요
+prompt_grammar: 문장 {}의 문법 구조를 설명해 주세요
+prompt_summary: 첨부된 텍스트를 요약해 주세요
+prompt_translate: '{}를 한국어로 번역하세요'
+

@@ -83,3 +83,4 @@ prompt_examples: 単語を使った文の使用例をいくつか挙げてくだ
 prompt_explain: 与えられたテキストにおける{}の意味を説明してください
 prompt_grammar: 文{}の文法構造を説明してください
 prompt_summary: 添付されたテキストを要約してください
+prompt_translate: '{} を日本語に翻訳'

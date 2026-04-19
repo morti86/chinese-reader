@@ -14,7 +14,7 @@ pub struct Keys {
     pub deepl: String,
 }
 
-crate::make_enum!(Language, [English, Polski, Deutsch, Русский, Française, Italiano, Español, Türkçe, 日本語]);
+//crate::make_enum!(Language, [English, Polski, Deutsch, Русский, Française, Italiano, Español, Türkçe, 日本語]);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Window {
@@ -22,7 +22,7 @@ pub struct Window {
     pub height: f32,
     pub split: f32,
     pub font_size: Option<f32>,
-    pub lang: Option<Language>,
+    pub lang: Option<String>,
     pub theme: String,
     pub settings_label_w: f32,
     pub spacing: f32,
@@ -37,7 +37,7 @@ impl Default for Window {
             height: 800.0,
             split: 0.65,
             font_size: Some(18.0),
-            lang: Some(Language::English),
+            lang: Some(String::from("English")),
             theme: "Catppuccin Mocha".to_string(),
             settings_label_w: 200.0,
             spacing: 2.0,
@@ -48,8 +48,8 @@ impl Default for Window {
 }
 
 impl Window {
-    pub fn lang(&self) -> Language {
-        self.lang.unwrap_or(Language::English)
+    pub fn lang(&self) -> String {
+        self.lang.clone().unwrap_or(String::from("English"))
     }
 
     pub fn theme(&self) -> iced::Theme {
@@ -104,6 +104,7 @@ pub struct Config {
     pub ai_chat: String,
     pub ai_role: String,
     pub ai_preamble: String,
+    
 
     pub new_ai: Option<AiChatConfig>,
     #[cfg(feature = "scraper")]
