@@ -15,10 +15,6 @@ And put them inside the models folder in your HOME directory (C:\Users\{user nam
 
 Either use the image button to load image from clipboard, or load an image file.
 
-## Deepl
-
-Deepl requires to set up a free API key on Deepl website. You can then translate a selected portion of text.
-
 ## AI
 
 Either subscribe to one of the supported providers to get an API key or set up a local Ollama chat. Among local models, Gemma4 is recommended for this task.
@@ -29,6 +25,7 @@ The functions available:
 - meaning: explain meaning without context
 - grammar: explain grammar of a selected fragment
 - explain: explain the meaning of a given fragment, with the whole text in context
+- translate: to your target language (app language)
 
 ## Notes
 
