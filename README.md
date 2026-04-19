@@ -40,7 +40,7 @@ It allows you to save notes so you can go back to them and review later. Can als
 
 Here pick the third button to manage texts in a database.
 
-<img width="716" height="155" alt="image" src="https://github.com/user-attachments/assets/ccffcf21-f6d0-4b4f-8768-79b17ae3e586" />
+<img width="692" height="147" alt="image" src="https://github.com/user-attachments/assets/db8e9d7b-42ac-4aef-8162-77c37b889776" />
 
 Here you can:
 - select one of the texts in the base and click the first button to load it
