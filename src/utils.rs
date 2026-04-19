@@ -217,10 +217,18 @@ pub fn get_models(p: &Provider) -> Vec<String> {
     //
     match p {
         Provider::Xai => vec![
+            "grok-4.20-0309-reasoning",
+            "grok-4.20-0309-non-reasoning",
+            "grok-4.20-multi-agent-0309",
+            "grok-4-1-fast-reasoning",
+            "grok-4-1-fast-non-reasoning",
             "grok-beta",
             "grok-4"
         ],
         Provider::Openai => vec![
+            "gpt-5.4",
+            "gpt-5.4-mini",
+            "gpt-5.4-nano",
             "gpt-5.2",
             "gpt-5",
             "gpt-5-mini",
@@ -228,8 +236,13 @@ pub fn get_models(p: &Provider) -> Vec<String> {
             "gpt-4.1",
             "pt-4.1-nano"
         ],
-        Provider::Deepseek => vec!["deepseek-chat"],
+        Provider::Deepseek => vec![
+            "deepseek-chat",
+            "deepseek-reasoner"
+        ],
         Provider::Gemini => vec![
+            "gemini-3.1-pro-preview",
+            "gemini-3-flash-preview",
             "gemini-3-pro-preview",
             "gemini-3-flash-preview",
             "gemini-2.5-flash",
@@ -242,6 +255,8 @@ pub fn get_models(p: &Provider) -> Vec<String> {
             "gemini-1.0-pro"
         ],
         Provider::Anthropic => vec![
+            "claude-opus-4-7",
+            "claude-sonnet-4-6",
             "claude-opus-4-6",
             "claude-sonnet-4-5",
             "claude-haiku-4-5",
