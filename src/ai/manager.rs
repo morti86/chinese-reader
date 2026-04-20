@@ -155,7 +155,7 @@ impl AiManager<Init> {
         })
     }
 
-    pub fn new_llama_cpp_url(self, url: &str, key: &str) -> crate::error::ReaderResult<AiManager<Init>> {
+    pub fn new_llama_cpp_url(url: &str, key: &str) -> crate::error::ReaderResult<AiManager<Init>> {
         Ok(AiManager::<Init>::Openai { 
             client: openai::Client::builder().base_url(url).api_key(key).build()?,
             agent: None,

@@ -601,7 +601,7 @@ impl App {
                     self.conf.ai_chats.insert(new_key.clone(), new_chat.clone());
                     self.conf.ai_chat = new_key;
                 }
-
+                
                 if let Some(aic) = self.conf.get_ai_config() 
                     && let Some(a) = crate::AGENT_NEW.get() {
                     let mut r = a.blocking_write();
@@ -609,6 +609,10 @@ impl App {
                     if aic.provider == crate::config::Provider::Ollama
                         && let Some(url) = aic.url.as_ref()
                         && let Ok(m) = crate::ai::manager::AiManager::new_ollama_url(url) {
+                        *r = m.ready(&aic.model);
+                    } else if aic.provider == crate::config::Provider::LlamaCpp
+                        && let Some(url) = aic.url.as_ref()
+                        && let Ok(m) = crate::ai::manager::AiManager::new_llama_cpp_url(&url, &aic.key.as_ref().unwrap_or(&dupa)) {
                         *r = m.ready(&aic.model);
                     } else if let Ok(m) = crate::ai::manager::AiManager::new(aic.provider.clone(), &aic.key.as_ref().unwrap_or(&dupa)) {
                         *r = m.ready(&aic.model);
