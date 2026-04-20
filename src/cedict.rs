@@ -1,5 +1,5 @@
 use rusqlite::{Connection, Row};
-use std::{collections::{HashMap, HashSet}, fmt};
+use std::{collections::{HashMap, HashSet}, fmt, hash::Hash, time::Instant};
 use rayon::prelude::*;
 use tracing::{debug, warn};
 use std::collections::BTreeMap;
@@ -8,7 +8,7 @@ use crate::error::ReaderResult;
 
 pub const HSK_TOTAL: [f32; 7] = [477.0, 736.0, 940.0, 971.0, 1056.0, 1076.0, 5301.0];
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash, Eq)]
 pub struct Entry {
     sim: String,
     tra: String,
@@ -19,6 +19,12 @@ pub struct Entry {
     idx: char,
     link: Option<String>,
     anki: Option<crate::anki::AnkiEntry>,
+}
+
+impl PartialEq for Entry {
+    fn eq(&self, other: &Self) -> bool {
+        self.sim.eq(&other.sim) && self.tra.eq(&other.tra) && self.mea.eq(&other.mea)
+    }
 }
 
 impl Entry {
@@ -111,7 +117,7 @@ impl fmt::Display for Entry {
 pub struct Cedict {
     data_t: BTreeMap<char, Vec<Entry>>,
     data_hsk: HashMap<u32,Vec<Entry>>,
-    anki: HashSet<AnkiEntry>,
+    anki: HashMap<String, AnkiEntry>,
 }
 
 impl Cedict {
@@ -142,33 +148,33 @@ impl Cedict {
                 Ok(aconn) => crate::anki::anki_words_entry(&aconn)?,
                 Err(e) => {
                     warn!("Error connecting Anki: {}", e);
-                    HashSet::new()
+                    HashMap::new()
                 }
             }
         } else {
             warn!("Empty Anki!");
-            HashSet::new()
+            HashMap::new()
         };
 
         debug!("Anki base loaded: {}", anki.len());
-
+        let start = Instant::now();
+        
         while let Ok(next) = data_tr.next() {
             if let Some(row) = next {
                 let mut e = Entry::from_row(row);
-                e.anki = anki.iter().find(|x| x.word.eq(&e.sim)).cloned();
+                e.anki = anki.get(e.sim.trim()).cloned();
                 let k = e.index();
                 data_t.entry(k).or_default().push(e.clone());
                 if let Some(hsk) = e.hsk {
                     data_hsk.entry(hsk).and_modify(|x| x.push(e.clone())).or_insert(vec![e]);
-                } else {
-                    data_t.entry(k).or_default().push(e);
-                }
+                }  
             } else {
-                warn!("Row with problems!");
+                warn!("Row with problems! {:?}", next);
                 break;
             }
         }
-
+        let elapsed = start.elapsed();
+        debug!("Loading Cedict data took {}ms", elapsed.as_millis());
 
         Ok(Self { 
             data_t,
@@ -237,9 +243,14 @@ impl Cedict {
 
     /// How many entries that are in Anki for each HSK level there are?
     pub fn count_hsk_anki(&self) -> HashMap<u32, usize> {
-        self.data_hsk.par_iter()
-            .map(|(hsk, e)| (*hsk, e.iter().filter(|x| x.anki.is_some()).count() ) )
-            .collect()
+        debug!("Anki stats");
+        let start = Instant::now();
+        let res = self.data_hsk.par_iter()
+            .map(|(hsk, e)| (*hsk, e.iter().filter(|x| x.anki.is_some()).collect::<HashSet<_>>().len() ) )
+            .collect();
+        let elapsed = start.elapsed();
+        debug!("Anki starts exec time: {}ms", elapsed.as_millis());
+        res
     }
 
     /// How many entries that are for each HSK level there are?

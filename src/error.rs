@@ -124,6 +124,12 @@ impl From<rig::completion::PromptError> for ReaderError {
     }
 }
 
+impl From<rig::model::ModelListingError> for ReaderError {
+    fn from(value: rig::model::ModelListingError) -> Self {
+        Self::Ai(value.to_string())
+    }
+}
+
 #[cfg(feature = "scraper")]
 impl From<SelectorErrorKind<'_>> for ReaderError {
     fn from(e: SelectorErrorKind<'_>) -> Self {

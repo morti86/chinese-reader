@@ -60,7 +60,7 @@ impl Window {
     }
 }
 
-crate::make_enum!(Provider, [Openai, Deepseek, Ollama, Gemini, Xai, Anthropic, Mistral]);
+crate::make_enum!(Provider, [Openai, Deepseek, Ollama, Gemini, Xai, Anthropic, Mistral, LlamaCpp]);
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
 pub struct AiChatConfig {

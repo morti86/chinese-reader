@@ -1,8 +1,8 @@
 use std::marker::PhantomData;
 
-use rig::{agent::Agent, client::CompletionClient, completion::Prompt, providers::{
+use rig::{agent::Agent, client::{CompletionClient, ModelListingClient}, completion::Prompt, providers::{
     anthropic, deepseek, gemini, mistral, ollama, openai, xai
-    }, streaming::{StreamedAssistantContent, StreamingPrompt, StreamingChat}, wasm_compat::WasmCompatSend
+    }, streaming::{StreamedAssistantContent, StreamingChat, StreamingPrompt}, wasm_compat::WasmCompatSend
 };
 use sipper::{Sender, StreamExt};
 
@@ -142,6 +142,7 @@ impl AiManager<Init> {
             Provider::Mistral => AiManager::<Init>::Mistral { client: mistral::Client::new(api_key)?, agent: None, preamble: None },
             Provider::Deepseek => AiManager::<Init>::Deepseek { client: deepseek::Client::new(api_key)?, agent: None, preamble: None },
             Provider::Anthropic => AiManager::<Init>::Anthropic { client: anthropic::Client::new(api_key)?, agent: None, preamble: None },
+            Provider::LlamaCpp => AiManager::Openai { client: openai::Client::new(api_key)?, agent: None, preamble: None, _pd: PhantomData },
         };
         Ok(s)
     }
@@ -151,6 +152,15 @@ impl AiManager<Init> {
             client: ollama::Client::builder().base_url(url).api_key(rig::client::Nothing).build()?,
             agent: None,
             preamble: None,
+        })
+    }
+
+    pub fn new_llama_cpp_url(self, url: &str, key: &str) -> crate::error::ReaderResult<AiManager<Init>> {
+        Ok(AiManager::<Init>::Openai { 
+            client: openai::Client::builder().base_url(url).api_key(key).build()?,
+            agent: None,
+            preamble: None,
+            _pd: PhantomData
         })
     }
 
@@ -181,6 +191,40 @@ impl AiManager<Init> {
         }
     }
 
+
+    pub async fn list_models(&self) -> ReaderResult<Vec<String>> {
+        match self {
+            Self::Openai { client, agent: _, preamble: _, _pd } => {
+                let models = client.list_models().await?;
+                Ok(models.data.iter().map(|m| m.display_name().to_string()).collect())
+            }
+            Self::Deepseek { client: _, agent: _, preamble: _, } => {
+                let models = crate::utils::get_models(&Provider::Deepseek);
+                Ok(models)
+            }
+            Self::Ollama { client, agent: _, preamble: _, } => {
+                let models = client.list_models().await?;
+                Ok(models.data.iter().map(|m| m.display_name().to_string()).collect())
+            }
+            Self::Anthropic { client: _, agent: _, preamble: _, } => {
+                let models = crate::utils::get_models(&Provider::Anthropic);
+                Ok(models)
+            }
+            Self::Xai { client: _, agent: _, preamble: _, } => {
+                let models = crate::utils::get_models(&Provider::Xai);
+                Ok(models)
+            }
+            Self::Gemini { client, agent: _, preamble: _, } => {
+                let models = client.list_models().await?;
+                Ok(models.data.iter().map(|m| m.display_name().to_string()).collect())
+            }
+            Self::Mistral { client, agent: _, preamble: _, } => {
+                let models = client.list_models().await?;
+                Ok(models.data.iter().map(|m| m.display_name().to_string()).collect())
+            }
+
+        }
+    }
 
     pub fn ready(self, model: &str) -> AiManager<Ready> {
         tracing::debug!("Setting up model: {}", model);

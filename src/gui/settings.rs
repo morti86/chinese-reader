@@ -479,7 +479,7 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
 
     let idr_ai_select = row![idc_ai_select, idc_ai_chat].spacing(conf.window.spacing);
     let is_ai_selected = ai_chat.is_some();
-
+    
     let idc_model: Element<'a, Message> = 
         if let Some(c) = app.new_ai.as_ref() {
             if get_models(&c.provider).is_empty() {
@@ -508,7 +508,7 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
                     text_input("", ai_name.as_str()).on_input(Message::AiNameChange) 
             ],
             row![   text(t!("url")).width(settings_label_w),
-                    text_input("", ai_url.as_str()).on_input_maybe(if provider == Provider::Ollama { Some(Message::AiUrlChange) } else { None }) 
+                    text_input("", ai_url.as_str()).on_input_maybe(if provider == Provider::Ollama || provider == Provider::LlamaCpp { Some(Message::AiUrlChange) } else { None }) 
             ],
             row![   text(t!("model")).width(settings_label_w),
                     idc_model,
@@ -608,17 +608,21 @@ pub fn anki_stats<'a>(app: &'a super::App) -> Column<'a, Message> {
     let win = &conf.window;
     let cedict = app.cedict.as_ref();
     if let Some(cd) = cedict {
-        let hsk: Vec<usize> = cd.count_hsk_anki().iter().map(|(_,h)| *h).collect();
+        let hsk_map = cd.count_hsk_anki();
+        let mut hsk: Vec<(u32,usize)> = hsk_map.iter()
+            .map(|(a,b)| (*a,*b))
+            .collect();
+        hsk.sort_by(|a,b| a.0.cmp(&b.0));
         let total = cd.anki_len();
         debug!("hsk: {:?} / {}", hsk, cd.data_hsk_len());
         return column![
-            row![text(format!("HSK1: {:5} / {:5}", hsk[0], HSK_TOTAL[0] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[0] as f32), hsk[0] as f32) ].spacing(win.spacing),
-            row![text(format!("HSK2: {:5} / {:5}", hsk[1], HSK_TOTAL[1] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[1] as f32), hsk[1] as f32) ].spacing(win.spacing),
-            row![text(format!("HSK3: {:5} / {:5}", hsk[2], HSK_TOTAL[2] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[2] as f32), hsk[2] as f32) ].spacing(win.spacing),
-            row![text(format!("HSK4: {:5} / {:5}", hsk[3], HSK_TOTAL[3] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[3] as f32), hsk[3] as f32) ].spacing(win.spacing),
-            row![text(format!("HSK5: {:5} / {:5}", hsk[4], HSK_TOTAL[4] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[4] as f32), hsk[4] as f32) ].spacing(win.spacing),
-            row![text(format!("HSK6: {:5} / {:5}", hsk[5], HSK_TOTAL[5] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[5] as f32), hsk[5] as f32) ].spacing(win.spacing),
-            row![text(format!("HSK7: {:5} / {:5}", hsk[6], HSK_TOTAL[6] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[6] as f32), hsk[6] as f32) ].spacing(win.spacing),
+            row![text(format!("HSK1: {:5} / {:5}", std::cmp::min(hsk[0].1, HSK_TOTAL[0] as usize), HSK_TOTAL[0] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[0] as f32), hsk[0].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK2: {:5} / {:5}", std::cmp::min(hsk[1].1, HSK_TOTAL[1] as usize), HSK_TOTAL[1] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[1] as f32), hsk[1].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK3: {:5} / {:5}", std::cmp::min(hsk[2].1, HSK_TOTAL[2] as usize), HSK_TOTAL[2] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[2] as f32), hsk[2].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK4: {:5} / {:5}", std::cmp::min(hsk[3].1, HSK_TOTAL[3] as usize), HSK_TOTAL[3] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[3] as f32), hsk[3].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK5: {:5} / {:5}", std::cmp::min(hsk[4].1, HSK_TOTAL[4] as usize), HSK_TOTAL[4] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[4] as f32), hsk[4].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK6: {:5} / {:5}", std::cmp::min(hsk[5].1, HSK_TOTAL[5] as usize), HSK_TOTAL[5] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[5] as f32), hsk[5].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK7: {:5} / {:5}", std::cmp::min(hsk[6].1, HSK_TOTAL[6] as usize), HSK_TOTAL[6] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[6] as f32), hsk[6].1 as f32) ].spacing(win.spacing),
             row![text(format!("total anki: {}", total))],
             button_nf!("\u{f015c}").on_press(Message::Close)
             ].padding(win.padding_frame).spacing(win.spacing).align_x(iced::Alignment::Center);

@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use chrono::{DateTime, Days, Utc};
 use rusqlite::Connection;
 use tracing::debug;
@@ -110,7 +110,7 @@ pub fn anki_words(conn: &Connection) -> ReaderResult<HashSet<String>> {
     Ok(results)
 }
 
-pub fn anki_words_entry(conn: &Connection) -> ReaderResult<HashSet<AnkiEntry>> {
+pub fn anki_words_entry(conn: &Connection) -> ReaderResult<HashMap<String, AnkiEntry>> {
     //let mut st = conn.prepare("SELECT id,did,REPLACE(sfld, CHAR(10), ' ') FROM notes N JOIN  WHERE id > ?")?;
     let mut st = conn.prepare(
             r#"
@@ -125,12 +125,13 @@ pub fn anki_words_entry(conn: &Connection) -> ReaderResult<HashSet<AnkiEntry>> {
         let deck: i64 = row.get(1).unwrap_or(0);
         let word: String = row.get(2)?;
         let deck_name: String = row.get(3).unwrap_or_default();
-        Ok(AnkiEntry { word, deck, added: DateTime::from_timestamp_millis(id).unwrap_or(DateTime::<Utc>::MIN_UTC), deck_name })
+        Ok(AnkiEntry { word: word.trim().to_string(), deck, added: DateTime::from_timestamp_millis(id).unwrap_or(DateTime::<Utc>::MIN_UTC), deck_name })
     })?;
-    let mut results = HashSet::<AnkiEntry>::new();
+    let mut results = HashMap::<String, AnkiEntry>::new();
     let mut rows_count: usize = 0;
     for row in rows {
-        results.insert(row?);
+        let r = row?;
+        results.insert(r.word.clone(), r);
         rows_count = rows_count + 1;
     }
     debug!("Rows: {}", rows_count);

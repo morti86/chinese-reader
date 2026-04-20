@@ -282,6 +282,7 @@ pub fn url_for_provider(p: &Provider) -> String {
         Provider::Ollama => String::from("http://localhost:11434"),
         Provider::Anthropic => String::from("https://api.anthropic.com"),
         Provider::Mistral => String::from("https://api.mistral.ai"),
+        Provider::LlamaCpp => String::from("http://localhost:8080"),
     }
 }
 
