@@ -197,7 +197,7 @@ pub async fn get_doc_md(db_file: &str, doc_id: u32) -> ReaderResult<String> {
                 result.push_str(&line[last_pos..]);
                 result.push_str("\n\n");
                 debug!("Finished line {}", i);
-                i = i + 1;
+                i += 1;
             }
             debug!("Finished: {}", result.len());
             Ok(result)

@@ -435,7 +435,7 @@ pub fn settings<'a>(app: &super::App) -> Element<'a, Message> {
     let idr_anki = row![ids_anki, idc_anki].padding(win.padding).spacing(win.spacing);
 
     let ids_appdata = text(t!("appdata")).width(win.settings_label_w);
-    let idc_appdata = text_input("", &app.conf.db.as_ref().unwrap_or(&String::new()).as_str());
+    let idc_appdata = text_input("", app.conf.db.as_ref().unwrap_or(&String::new()).as_str());
     let idd_appdata = button_nf!("\u{e5fe}").on_press(Message::DbChange);
     let idr_appdata = row![ids_appdata, idc_appdata, idd_appdata].padding(win.padding).spacing(win.spacing);
 
@@ -474,7 +474,7 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
     let idc_ai_select = text(t!("ai_select")).width(settings_label_w);
     let ai_chat = app.new_ai.as_ref().or(conf.ai_chats.get(conf.ai_chat.as_str()));
     let idc_ai_chat: Element<'a, Message> = if is_new { text("").into() } else {
-        pick_list(conf.get_ai_chats(),ai_chat.clone(), Message::AiChatSelected).into()
+        pick_list(conf.get_ai_chats(),ai_chat, Message::AiChatSelected).into()
     };
 
     let idr_ai_select = row![idc_ai_select, idc_ai_chat].spacing(conf.window.spacing);
@@ -483,13 +483,13 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
     let idc_model: Element<'a, Message> = 
         if let Some(c) = app.new_ai.as_ref() {
             if get_models(&c.provider).is_empty() {
-                text_input(&t!("enter_model").to_string(), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input(Message::AiModelChange).into() 
+                text_input(&t!("enter_model"), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input(Message::AiModelChange).into() 
             } else {
                 pick_list(get_models(&c.provider), ai_chat.map(|x| x.model.clone()), Message::AiModelChange).into() 
             }
         } else if let Some(c) = conf.get_ai_config() {
             if get_models(&c.provider).is_empty() {
-                text_input(&t!("enter_model").to_string(), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input(Message::AiModelChange).into() 
+                text_input(&t!("enter_model"), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input(Message::AiModelChange).into() 
             } else {
                 pick_list(get_models(&c.provider), ai_chat.map(|x| x.model.clone()), Message::AiModelChange).into() 
             }
@@ -497,18 +497,22 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
             text("<< NO MODELS >>").into()
     };
 
+
     let provider = ai_chat.map(|e| e.provider).unwrap_or_default();
     let ai_name = ai_chat.map(|e| e.name.clone()).unwrap_or_default();
     let ai_url = ai_chat.map(|e| e.url.clone().unwrap_or_default() ).unwrap_or_default();
     let ai_chat_key = ai_chat.map(|e| e.key.clone().unwrap_or_default()).unwrap_or_default();
+    //let ai_chat_temp = ai_chat.map(|e| if let Some(t) = e.temperature { t.to_string() } else { String::from("") } ).unwrap();
 
+    //let idc_temp = text_input("", &ai_chat_temp)
+    //    .on_input_maybe(if provider.is_local() { Some(Message::AiTemperatureChanged) } else { None } );
     let idc_ai_details: Element<'_, Message> = if is_ai_selected || app.new_ai.is_some() {
         column![
             row![   text(t!("name")).width(settings_label_w), 
                     text_input("", ai_name.as_str()).on_input(Message::AiNameChange) 
             ],
             row![   text(t!("url")).width(settings_label_w),
-                    text_input("", ai_url.as_str()).on_input_maybe(if provider == Provider::Ollama || provider == Provider::LlamaCpp { Some(Message::AiUrlChange) } else { None }) 
+                    text_input("", ai_url.as_str()).on_input_maybe(if provider.is_local() { Some(Message::AiUrlChange) } else { None }) 
             ],
             row![   text(t!("model")).width(settings_label_w),
                     idc_model,
@@ -521,6 +525,10 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
             row![   text(t!("provider")).width(settings_label_w),
                     pick_list(Provider::ALL, Some(provider), Message::AiProviderChange) 
             ],
+            //row![
+            //        text("temp").width(settings_label_w),
+            //        idc_temp
+            //],
         ].spacing(conf.window.spacing).into()
     } else {
         text(t!("ai_select")).into()
@@ -616,13 +624,13 @@ pub fn anki_stats<'a>(app: &'a super::App) -> Column<'a, Message> {
         let total = cd.anki_len();
         debug!("hsk: {:?} / {}", hsk, cd.data_hsk_len());
         return column![
-            row![text(format!("HSK1: {:5} / {:5}", std::cmp::min(hsk[0].1, HSK_TOTAL[0] as usize), HSK_TOTAL[0] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[0] as f32), hsk[0].1 as f32) ].spacing(win.spacing),
-            row![text(format!("HSK2: {:5} / {:5}", std::cmp::min(hsk[1].1, HSK_TOTAL[1] as usize), HSK_TOTAL[1] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[1] as f32), hsk[1].1 as f32) ].spacing(win.spacing),
-            row![text(format!("HSK3: {:5} / {:5}", std::cmp::min(hsk[2].1, HSK_TOTAL[2] as usize), HSK_TOTAL[2] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[2] as f32), hsk[2].1 as f32) ].spacing(win.spacing),
-            row![text(format!("HSK4: {:5} / {:5}", std::cmp::min(hsk[3].1, HSK_TOTAL[3] as usize), HSK_TOTAL[3] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[3] as f32), hsk[3].1 as f32) ].spacing(win.spacing),
-            row![text(format!("HSK5: {:5} / {:5}", std::cmp::min(hsk[4].1, HSK_TOTAL[4] as usize), HSK_TOTAL[4] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[4] as f32), hsk[4].1 as f32) ].spacing(win.spacing),
-            row![text(format!("HSK6: {:5} / {:5}", std::cmp::min(hsk[5].1, HSK_TOTAL[5] as usize), HSK_TOTAL[5] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[5] as f32), hsk[5].1 as f32) ].spacing(win.spacing),
-            row![text(format!("HSK7: {:5} / {:5}", std::cmp::min(hsk[6].1, HSK_TOTAL[6] as usize), HSK_TOTAL[6] )).width(400.0), progress_bar(0.0..=(HSK_TOTAL[6] as f32), hsk[6].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK1: {:5} / {:5}", std::cmp::min(hsk[0].1, HSK_TOTAL[0] as usize), HSK_TOTAL[0] )).width(400.0), progress_bar(0.0..=HSK_TOTAL[0], hsk[0].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK2: {:5} / {:5}", std::cmp::min(hsk[1].1, HSK_TOTAL[1] as usize), HSK_TOTAL[1] )).width(400.0), progress_bar(0.0..=HSK_TOTAL[1], hsk[1].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK3: {:5} / {:5}", std::cmp::min(hsk[2].1, HSK_TOTAL[2] as usize), HSK_TOTAL[2] )).width(400.0), progress_bar(0.0..=HSK_TOTAL[2], hsk[2].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK4: {:5} / {:5}", std::cmp::min(hsk[3].1, HSK_TOTAL[3] as usize), HSK_TOTAL[3] )).width(400.0), progress_bar(0.0..=HSK_TOTAL[3], hsk[3].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK5: {:5} / {:5}", std::cmp::min(hsk[4].1, HSK_TOTAL[4] as usize), HSK_TOTAL[4] )).width(400.0), progress_bar(0.0..=HSK_TOTAL[4], hsk[4].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK6: {:5} / {:5}", std::cmp::min(hsk[5].1, HSK_TOTAL[5] as usize), HSK_TOTAL[5] )).width(400.0), progress_bar(0.0..=HSK_TOTAL[5], hsk[5].1 as f32) ].spacing(win.spacing),
+            row![text(format!("HSK7: {:5} / {:5}", std::cmp::min(hsk[6].1, HSK_TOTAL[6] as usize), HSK_TOTAL[6] )).width(400.0), progress_bar(0.0..=HSK_TOTAL[6], hsk[6].1 as f32) ].spacing(win.spacing),
             row![text(format!("total anki: {}", total))],
             button_nf!("\u{f015c}").on_press(Message::Close)
             ].padding(win.padding_frame).spacing(win.spacing).align_x(iced::Alignment::Center);

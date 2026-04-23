@@ -25,8 +25,8 @@ pub fn find_config_path() -> Option<std::path::PathBuf> {
     }
 
     // 2. Check Executable Directory
-    if let Ok(exe_path) = env::current_exe() {
-        if let Some(exe_dir) = exe_path.parent() {
+    if let Ok(exe_path) = env::current_exe()
+        && let Some(exe_dir) = exe_path.parent() {
             let mut local_config = exe_dir.to_path_buf();
             local_config.push(CONFIG_FILE);
             debug!("Checking local: {:?}", local_config);
@@ -34,7 +34,6 @@ pub fn find_config_path() -> Option<std::path::PathBuf> {
                 debug!("Local config");
                 return Some(local_config);
             }
-        }
     }
 
     None

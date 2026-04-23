@@ -8,7 +8,7 @@ use crate::error::ReaderResult;
 
 pub const HSK_TOTAL: [f32; 7] = [477.0, 736.0, 940.0, 971.0, 1056.0, 1076.0, 5301.0];
 
-#[derive(Clone, Debug, Hash, Eq)]
+#[derive(Clone, Debug, Eq)]
 pub struct Entry {
     sim: String,
     tra: String,
@@ -24,6 +24,14 @@ pub struct Entry {
 impl PartialEq for Entry {
     fn eq(&self, other: &Self) -> bool {
         self.sim.eq(&other.sim) && self.tra.eq(&other.tra) && self.mea.eq(&other.mea)
+    }
+}
+
+impl Hash for Entry {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.sim.hash(state);
+        self.tra.hash(state);
+        self.mea.hash(state);
     }
 }
 
@@ -70,8 +78,8 @@ impl Entry {
                 } else if s.starts_with("used in") {
                     let sep_ix = s.find("|");
                     let end_ix = s.find("[");
-                    if sep_ix.is_some() && end_ix.is_some() {
-                        let han = &s[sep_ix.unwrap()+1..end_ix.unwrap()];
+                    if let Some (sep_ix) = sep_ix && let Some(end_ix) = end_ix {
+                        let han = &s[sep_ix+1..end_ix];
                         format!("[used in {}](c:{})\n",han,han)
                     } else {
                         s.to_string()
@@ -169,12 +177,12 @@ impl Cedict {
                     data_hsk.entry(hsk).and_modify(|x| x.push(e.clone())).or_insert(vec![e]);
                 }  
             } else {
-                warn!("Row with problems! {:?}", next);
                 break;
             }
         }
         let elapsed = start.elapsed();
         debug!("Loading Cedict data took {}ms", elapsed.as_millis());
+
 
         Ok(Self { 
             data_t,

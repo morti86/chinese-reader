@@ -62,6 +62,12 @@ impl Window {
 
 crate::make_enum!(Provider, [Openai, Deepseek, Ollama, Gemini, Xai, Anthropic, Mistral, LlamaCpp]);
 
+impl Provider {
+    pub fn is_local(&self) -> bool {
+        matches!(self, Provider::Ollama | Provider::LlamaCpp)
+    }
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
 pub struct AiChatConfig {
     pub name: String,
@@ -69,6 +75,7 @@ pub struct AiChatConfig {
     pub url: Option<String>,
     pub model: String,
     pub provider: Provider,
+    pub temperature: Option<f64>,
 }
 
 impl fmt::Display for AiChatConfig {
@@ -167,8 +174,8 @@ impl Config {
     }
     
     pub fn get_ai_chats(&self) -> Vec<AiChatConfig> {
-        self.ai_chats.iter()
-            .map(|(_,c)| c.clone())
+        self.ai_chats.values()
+            .map(|c| c.clone())
             .collect()
     }
 

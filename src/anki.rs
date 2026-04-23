@@ -26,7 +26,7 @@ impl std::hash::Hash for AnkiEntry {
 impl AnkiEntry {
     pub fn new(word: &str, did: i64, id: i64) -> Self {
         let added = DateTime::from_timestamp_millis(id)
-            .unwrap_or_else(|| Utc::now());
+            .unwrap_or_else(Utc::now);
 
         Self {
             word: word.to_string(),

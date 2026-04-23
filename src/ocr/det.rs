@@ -90,8 +90,8 @@ impl Det {
                     }
                 }
             })?; 
-        let width = (x_max - x_min) as u32;
-        let height = (y_max - y_min) as u32;
+        let width = x_max - x_min;
+        let height = y_max - y_min;
         if width <= 5 || height <= 5 {
             return None;
         }

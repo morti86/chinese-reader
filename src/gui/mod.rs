@@ -154,7 +154,7 @@ impl App {
 
         if provider == crate::config::Provider::Ollama
             && let Some(url) = chat.url.as_ref() {
-            match crate::ai::manager::AiManager::new_ollama_url(url) {
+            match crate::ai::manager::AiManager::new_ollama_url(url, chat.temperature) {
                 Ok(agent) => {
                     let a = agent.preamble(&conf.ai_preamble)
                         .ready(&chat.model);
@@ -166,8 +166,21 @@ impl App {
                     error!("Agent init error: {}", e);
                 }
             }
-        }
-        else {
+        } else if provider == crate::config::Provider::LlamaCpp
+            && let Some(url) = chat.url.as_ref() {
+            match crate::ai::manager::AiManager::new_llama_cpp_url(url, &key) {
+                Ok(agent) => {
+                    let a = agent.preamble(&conf.ai_preamble)
+                        .ready(&chat.model);
+                    if let Err(e) = crate::AGENT_NEW.set(Arc::new(RwLock::new(a))) {
+                        error!("Can't set agent{}", e);
+                    }
+                }
+                Err(e) => {
+                    error!("Agent init error: {}", e);
+                }
+            }
+        } else {
             match crate::ai::manager::AiManager::new(provider, &key) {
                 Ok(agent) => {
                     let a = agent.preamble(&conf.ai_preamble)
@@ -493,11 +506,11 @@ impl App {
                             && s.len() <= 15 { // is word
                             if let Some(cedict) = &self.cedict {
                                 let res = cedict.find(s.trim());
-                                debug!("Result {:?}", res);
+                                debug!("CEDict::Result {:?}", res);
                                 for e in res {
                                     debug!("Entry: {:?}", e);
                                     self.result_text.push_str(e.to_md().as_str());
-                                    self.result_raw.push_str( format!("{}{}", self.result_raw, e.to_string()).as_str() );
+                                    self.result_raw.push_str( format!("{}{}", self.result_raw, e).as_str() );
                                 }
                                 if let Some(anki) = self.conf.anki.clone() {
                                     return iced::Task::perform(async move {
@@ -552,6 +565,15 @@ impl App {
                     c.url = str_to_op(url);
                 }
                 self.ai_changed = true;
+            }
+            Message::AiTemperatureChanged(t) => {
+                if let Some(c) = self.new_ai.as_mut() {
+                    c.temperature = t.parse::<f64>().ok();
+                } else if let Some(c) = self.conf.get_ai_config_mut() {
+                    c.temperature = t.parse::<f64>().ok();
+                }
+                self.ai_changed = true;
+
             }
             Message::AiNameChange(name) => {
                 if let Some(c) = self.new_ai.as_mut() {
@@ -608,13 +630,13 @@ impl App {
                     let dupa = String::new();
                     if aic.provider == crate::config::Provider::Ollama
                         && let Some(url) = aic.url.as_ref()
-                        && let Ok(m) = crate::ai::manager::AiManager::new_ollama_url(url) {
+                        && let Ok(m) = crate::ai::manager::AiManager::new_ollama_url(url, aic.temperature) {
                         *r = m.ready(&aic.model);
                     } else if aic.provider == crate::config::Provider::LlamaCpp
                         && let Some(url) = aic.url.as_ref()
-                        && let Ok(m) = crate::ai::manager::AiManager::new_llama_cpp_url(&url, &aic.key.as_ref().unwrap_or(&dupa)) {
+                        && let Ok(m) = crate::ai::manager::AiManager::new_llama_cpp_url(&url, aic.key.as_ref().unwrap_or(&dupa) ) {
                         *r = m.ready(&aic.model);
-                    } else if let Ok(m) = crate::ai::manager::AiManager::new(aic.provider.clone(), &aic.key.as_ref().unwrap_or(&dupa)) {
+                    } else if let Ok(m) = crate::ai::manager::AiManager::new(aic.provider, aic.key.as_ref().unwrap_or(&dupa)) {
                         *r = m.ready(&aic.model);
                     }
                 }
@@ -661,6 +683,7 @@ impl App {
                         }
                     }
                 }
+
                 match toml::to_string(&self.conf) {
                     Ok(s) => {
                         return iced::Task::perform(async move {
@@ -685,6 +708,7 @@ impl App {
                     key: None, 
                     url: Some(crate::utils::url_for_provider(&provider)), 
                     model: String::new(),
+                    temperature: None,
                     provider });
 
             }
@@ -738,11 +762,15 @@ impl App {
                     }
                 }
             }
+            Message::AiNoStreamResult(s) => {
+                self.answer_text = iced::widget::markdown::Content::new();
+                self.answer_text.push_str(&s);
+                self.answer_raw = s;
+            }
             Message::AiStop => {
-                if let Some(cts) = &self.cts {
-                    if let Err(e) = cts.blocking_send(CancellationToken {}) {
+                if let Some(cts) = &self.cts
+                    && let Err(e) = cts.blocking_send(CancellationToken {}) {
                         error!("Error stopping: {}", e);
-                    }
                 }
             }
             Message::PromptMeaning => {
@@ -974,8 +1002,8 @@ impl App {
                     debug!("Note link clicked");
                     let q = &e[2..];
                     if let Some(sep_ix) = q.find(":") {
-                        let line = &q[..sep_ix];
-                        let column = &q[..sep_ix];
+                        let line = &e[..sep_ix];
+                        let column = &e[..sep_ix];
                         debug!("clicked note link: {}:{}",line,column);
                         if let Ok(line) = line.parse::<usize>()
                             && let Ok(column) = column.parse::<usize>() {
@@ -1010,7 +1038,7 @@ impl App {
                 }
             }
             Message::NotesDelete { document, line, character } => {
-                if let Err(e) = delete_note(&mut self.doc_conn, document, line as i64, character as i64) {
+                if let Err(e) = delete_note(&mut self.doc_conn, document, line, character) {
                     return iced::Task::done(Message::ShowModal(e.to_string()));
                 }
                 return iced::Task::done(Message::Notes);
@@ -1341,17 +1369,18 @@ impl App {
             match  content {
                 Ok(content) => {
                     let message = Rmsg::User { content };
-
+ 
                     let conf = self.conf.get_ai_config();
                     if conf.is_none() {
                         return iced::Task::done(Message::ShowModal(String::from("No config found")));
                     }
                     let chat_history = self.chat_history.clone();
+
                     if let Some(sender) = &self.sender {
                         let sender = sender.clone();
                         return iced::Task::perform(async move {
                             let message = message.clone();
-                            sender.send(ChatCommand::Request { message , chat_history: chat_history }).await
+                            sender.send(ChatCommand::Request { message , chat_history }).await
                         }, |r| {
                             match r {
                                 Ok(_) => Message::Void,

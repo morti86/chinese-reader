@@ -31,7 +31,7 @@ i18n!("locales");
 
 static AGENT_NEW: OnceCell<std::sync::Arc<tokio::sync::RwLock<crate::ai::manager::AiChat>>> = OnceCell::const_new();
 
-const FONT: &'static [u8] = include_bytes!("../SymbolsNerdFont-Regular.ttf");
+const FONT: &[u8] = include_bytes!("../SymbolsNerdFont-Regular.ttf");
 
 pub fn run(theme: &str) -> Result<(), iced::Error> {
     for e in iced::Theme::ALL {
@@ -55,13 +55,13 @@ pub fn run(theme: &str) -> Result<(), iced::Error> {
 
 fn main() {
     #[cfg(debug_assertions)]
-    let env_rust_log = Some(Level::DEBUG);
+    let env_rust_log = Level::DEBUG;
     #[cfg(debug_assertions)]
     tracing_subscriber::registry()
         .with(
             fmt::layer()
                 .compact()
-                .with_filter(LevelFilter::from_level(env_rust_log.unwrap_or(Level::INFO))),
+                .with_filter(LevelFilter::from_level(env_rust_log)),
         )
         .with(
             fmt::layer().with_writer(std::io::stdout)
@@ -70,7 +70,8 @@ fn main() {
             Targets::default()
             .with_target("cnreader", env_rust_log)
             .with_target("iced", Level::WARN)
-            .with_target("rig_core", Level::INFO)
+            .with_target("rig_core", Level::TRACE)
+            .with_target("rig", Level::TRACE)
             .with_target("stardict", Level::INFO)
         )
         .init();
