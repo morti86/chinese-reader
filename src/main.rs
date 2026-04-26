@@ -43,12 +43,14 @@ pub fn run(theme: &str) -> Result<(), iced::Error> {
                 .theme(gui::App::theme)
                 .window_size(iced::Size::new(1400.0,800.0))
                 .subscription(gui::App::subscription)
+                .exit_on_close_request(false)
                 .font(FONT)
                 .run();
         }
     }
     iced::application(gui::App::default, gui::App::update, gui::App::view)
         .subscription(gui::App::subscription)
+        .exit_on_close_request(false)
         .font(FONT)
         .run()
 }
@@ -56,6 +58,7 @@ pub fn run(theme: &str) -> Result<(), iced::Error> {
 fn main() {
     #[cfg(debug_assertions)]
     let env_rust_log = Level::DEBUG;
+    
     #[cfg(debug_assertions)]
     tracing_subscriber::registry()
         .with(
@@ -70,8 +73,8 @@ fn main() {
             Targets::default()
             .with_target("cnreader", env_rust_log)
             .with_target("iced", Level::WARN)
-            .with_target("rig_core", Level::TRACE)
-            .with_target("rig", Level::TRACE)
+            .with_target("rig_core", Level::WARN)
+            .with_target("rig", Level::WARN)
             .with_target("stardict", Level::INFO)
         )
         .init();

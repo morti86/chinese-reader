@@ -5,6 +5,8 @@ use tracing::{debug, info, warn};
 use crate::AGENT_NEW;
 pub mod manager;
 pub mod ollama;
+pub mod llama;
+pub mod deepl;
 
 #[derive(Clone)]
 pub enum ChatCommand {
@@ -18,6 +20,7 @@ pub enum ChatEvent {
     ToolCall { id: String, function: String, args: String },
     ToolCallDelta(ToolCallDeltaContent),
     Reasoning(rig::completion::message::Reasoning),
+    ReasoningDelta(String),
     Final,
     ChatError(String),
 }

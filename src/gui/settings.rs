@@ -2,7 +2,7 @@ use iced::advanced::text::highlighter::PlainText;
 use iced::widget::{Column, Row, TextEditor, button, checkbox, column, container, markdown, pick_list, progress_bar, row, scrollable, slider, space, table, text, text_editor, text_input, tooltip};
 use iced::{Alignment, Element, Font, Padding, Renderer, Theme};
 use crate::cedict::HSK_TOTAL;
-use crate::config::{Provider, Window};
+use crate::config::{LlamaType, Provider, Window};
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType,TextExtractorType};
 use crate::utils::get_models;
@@ -10,7 +10,7 @@ use super::message::Message;
 use super::SidebarMode;
 use super::TextOption;
 use std::path::Path;
-use tracing::{debug, info};
+use tracing::debug;
 
 macro_rules! button_nf {
     ($text:expr) => {
@@ -199,8 +199,15 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
 
             let is_ollama = if let Some(c) = app.conf.get_ai_config() && c.provider == Provider::Ollama { Some(Message::AiOllamaKeepAlive) } else { None };
             let idc_ka = (if app.ollama_alive { button_nf!("\u{f205}") } else { button_nf!("\u{f204}") }).on_press_maybe(is_ollama);
-            column![id_mode, idr_prompts, idr_prompts2, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), row![idc_to_notes, idc_stop, idc_ka].spacing(win.spacing) ]
-                .padding(win.padding_frame).align_x(iced::Alignment::Center)
+            column![id_mode, idr_prompts, idr_prompts2, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), 
+                row![idc_to_notes, idc_stop, idc_ka,
+                    if let Some(c) = app.conf.get_ai_config() && c.provider == Provider::LlamaCpp {
+                        column![button(text(&app.llama_state)).on_press(Message::AiLlamaToggle).width(40.0)]
+                    } else {
+                        column![text("-")]
+                    }
+                ].spacing(win.spacing).padding(win.padding),
+                ].padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
         SidebarMode::Dictionary => {
             let idc_result = scrollable(markdown::view(app.result_text.items(), app.theme())
@@ -227,7 +234,6 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
         && Path::new(&format!("{}{}", app.models_dir,crate::ocr::DET_FILE)).exists()
         && Path::new(&format!("{}{}", app.models_dir,crate::ocr::INDEX)).exists()
         && Path::new(&format!("{}{}", app.models_dir,crate::ocr::REC_FILE)).exists();
-    info!("OCR enabled: {}", ocr_enabled);
 
     let idc_settings = button_nft!("\u{eb51}", t!("settings"), Settings);
     let idc_settings_ai = button_nft!("\u{ee9c}", t!("settings_ai"), AiSettings);
@@ -253,6 +259,7 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
         None
     };
     let idc_anki_db = button_nf!("\u{f1c0}").on_press_maybe(anki_acc);
+    let idc_deepl = button_nf!("\u{f05ca}").on_press(Message::DeeplAsk);
     
     #[cfg(feature = "scraper")]
     let idr_left_top = row![
@@ -308,7 +315,7 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
     let idc_save_prog = button_nf!("\u{eb4a}")
         .on_press(Message::UpdateProgress);
 
-    let idr_buttons = row![idc_simplified, idc_save_prog].padding(win.padding_frame).spacing(win.spacing);
+    let idr_buttons = row![idc_simplified, idc_save_prog, idc_deepl].padding(win.padding_frame).spacing(win.spacing);
 
     let cursor = app.position;
     let (line,column) = (cursor.line, cursor.column);
@@ -443,6 +450,11 @@ pub fn settings<'a>(app: &super::App) -> Element<'a, Message> {
     let idc_save = button_nf!("\u{f145b}").on_press(Message::SettingsSave);
     let idr_b = row![ idc_close, idc_save ].padding(win.padding).spacing(win.spacing);
 
+    let ids_lang = text(format!("Deepl {}", t!("language")));
+    let idc_lang = pick_list(crate::ai::deepl::ALL_LANGS, app.conf.deepl_lang.clone(), Message::DeeplLangSel);
+    let idc_key = text_input("key", &app.conf.keys.deepl).on_input(Message::DeeplKeyChanged);
+    let idr_deepl = row![ids_lang, idc_lang, idc_key].spacing(win.spacing).padding(win.padding);
+
     column![
         idr_theme, 
         idr_lang, 
@@ -451,7 +463,8 @@ pub fn settings<'a>(app: &super::App) -> Element<'a, Message> {
         idr_anki,
         idr_appdata,
         iced::widget::rule::horizontal(2.0),
-        idr_b
+        idr_deepl,
+        idr_b,
     ].padding(win.padding_frame).align_x(iced::Alignment::Center).into()
 }
 
@@ -481,22 +494,48 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
     let is_ai_selected = ai_chat.is_some();
     
     let idc_model: Element<'a, Message> = 
-        if let Some(c) = app.new_ai.as_ref() {
+        if let Some(c) = app.get_ai_config() {
             if get_models(&c.provider).is_empty() {
-                text_input(&t!("enter_model"), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input(Message::AiModelChange).into() 
-            } else {
-                pick_list(get_models(&c.provider), ai_chat.map(|x| x.model.clone()), Message::AiModelChange).into() 
-            }
-        } else if let Some(c) = conf.get_ai_config() {
-            if get_models(&c.provider).is_empty() {
-                text_input(&t!("enter_model"), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input(Message::AiModelChange).into() 
+                text_input(&t!("enter_model"), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input_maybe(
+                    if c.provider.is_llama() { None } else { Some(Message::AiModelChange) }).into() 
             } else {
                 pick_list(get_models(&c.provider), ai_chat.map(|x| x.model.clone()), Message::AiModelChange).into() 
             }
         } else {
             text("<< NO MODELS >>").into()
     };
-
+    
+    let idc_llama_cpp: Element<'a, Message> =
+        if let Some(c) = ai_chat
+            && c.provider == Provider::LlamaCpp {
+            row![
+                column![space()].width(settings_label_w),
+                column![
+                    row![text("llama_type"), pick_list(LlamaType::ALL, c.llama_type.as_ref(), Message::AiLlamaTypeSelected)].spacing(2.0),
+                    if let Some(ltype) = c.llama_type.as_ref()
+                        && let crate::config::LlamaType::Local { cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty } = ltype {
+                        column![
+                            row![
+                                text("ctx_size").width(settings_label_w),
+                                text_input("ctx_size", &ctx_size.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(120.0).on_input(Message::AiLlamaCtxSizeChanged)
+                            ].spacing(2.0).padding(2.0),
+                            row![text("cache_type_k").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_k.clone(), Message::AiCacheTypeKChanged)].spacing(2.0).padding(2.0),
+                            row![text("cache_type_v").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_v.clone(), Message::AiCacheTypeVChanged)].spacing(2.0).padding(2.0),
+                            row![text("flash_attn").width(settings_label_w), checkbox(flash_attn.unwrap_or(false)).on_toggle(Message::AiFlashAttnChanged) ].spacing(2.0).padding(2.0),
+                            row![text("n_cpu_moe").width(settings_label_w), text_input("", &n_cpu_moe.map(|c| c.to_string()).unwrap_or_default()).width(50.0).on_input(Message::AiNCpuMoeChanged) ].spacing(2.0).padding(2.0),
+                            row![
+                                text("reasoning_budget").width(settings_label_w),
+                                text_input("", &reasoning_budget.map(|c| c.to_string()).unwrap_or(String::from(""))).width(80.0).on_input(Message::AiReasoningBudgetChanged)
+                            ].spacing(5.0).padding(2.0),
+                            row![text("port").width(settings_label_w) ,text_input("port", &port.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(80.0).on_input(Message::AiPortChanged)].spacing(2.0).padding(2.0),
+                            row![text("presence_penalty").width(settings_label_w), text_input("", &presence_penalty.clone().unwrap_or_default()).width(80.0).on_input(Message::AiPresencePenaltyChanged) ].spacing(2.0).padding(2.0)
+                        ].spacing(2.0).padding(10.0)
+                    } else { column![] }
+                ].padding(10.0)
+            ].into()
+        } else {
+            text("").into()
+        };
 
     let provider = ai_chat.map(|e| e.provider).unwrap_or_default();
     let ai_name = ai_chat.map(|e| e.name.clone()).unwrap_or_default();
@@ -516,6 +555,7 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
             ],
             row![   text(t!("model")).width(settings_label_w),
                     idc_model,
+                    button_nf!("\u{f07c}").on_press_maybe(if provider == Provider::LlamaCpp { Some(Message::AiLlamaModelPathPick) } else { None })
             ],
             row![
                     text(t!("ai_key")).width(settings_label_w),
@@ -525,6 +565,7 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
             row![   text(t!("provider")).width(settings_label_w),
                     pick_list(Provider::ALL, Some(provider), Message::AiProviderChange) 
             ],
+            idc_llama_cpp,
             //row![
             //        text("temp").width(settings_label_w),
             //        idc_temp

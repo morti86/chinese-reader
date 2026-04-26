@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use iced::widget::{markdown::Uri, text_editor};
 
-use crate::ai::ChatEvent;
+use crate::{ai::ChatEvent, config::LlamaType};
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType, TextExtractorType};
 
@@ -19,10 +19,8 @@ pub enum Message {
     Close,
     AiSettings,
     AiSettingsSave,
-    AiSaveDone,
     Settings,
     SettingsSave,
-    SaveDone,
     AnkiStats,
 
     EditAction(text_editor::Action),
@@ -51,7 +49,6 @@ pub enum Message {
     LinkClicked(Uri),
 
     AiChatSelected(crate::config::AiChatConfig),
-    AskAi,
     AiNameChange(String),
     AiUrlChange(String),
     AiModelChange(String),
@@ -65,19 +62,31 @@ pub enum Message {
     AiOllamaKeepAlive,
     AiOllamaKeepAliveRes(bool),
     AiOllamaKeepAliveModal{ msg: String, ka: bool },
+    AiLlamaTypeSelected(LlamaType),
+    AiLlamaModelPathPick,
+    AiLlamaCtxSizeChanged(String),
+    AiCacheTypeKChanged(crate::config::CacheType),
+    AiCacheTypeVChanged(crate::config::CacheType),
+    AiFlashAttnChanged(bool),
+    AiNCpuMoeChanged(String),
+    AiReasoningBudgetChanged(String),
+    AiPortChanged(String),
+    AiLlamaEvent(crate::ai::llama::LlamaEvent),
+    AiLlamaToggle,
+    AiPresencePenaltyChanged(String),
 
     SidebarModeChanged(super::SidebarMode),
 
     ThemeSelected(iced::Theme),
 
     Void,
+    Exit,
+    BeforeExit,
 
     AnswerCopy,
     AnswerToNotes,
     RemoveNote,
     SaveNote,
-    PrevNote,
-    NextNote,
 
     DbChange,
 
@@ -106,7 +115,6 @@ pub enum Message {
 
     UpdateProgress,
 
-    DownloadFile(FileToDl),
     DlEvent(crate::ocr::dl::DlEvent),
 
     #[cfg(feature = "scraper")]
@@ -131,10 +139,10 @@ pub enum Message {
     Language(String),
 
     AppDataChanged(String),
-    AnkiResUpdate(Vec<String>),
+    //AnkiResUpdate(Vec<String>),
     AnkiChanged(String),
 
-    MarkDown(bool),
+    //MarkDown(bool),
 
     TextMode(super::TextMode),
 
@@ -164,4 +172,8 @@ pub enum Message {
     NotesExport,
     NotesCopy(String),
     NotesDelete{ document: u32, line: i64, character: i64 },
+
+    DeeplAsk,
+    DeeplLangSel(deepl::Lang),
+    DeeplKeyChanged(String),
 }

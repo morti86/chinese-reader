@@ -1,6 +1,6 @@
 [package]
 name = "cnreader"
-version = "1.1.4"
+version = "1.1.5"
 edition = "2024"
 
 [dependencies]
@@ -8,7 +8,7 @@ rayon = "1.10.1"
 iced = { version = "0.14.*" , features=["tokio", "advanced","sipper","svg","markdown"] }
 tendril = "0.4.3"
 rig-core = { git = "https://github.com/0xPlaygrounds/rig.git", features = ["derive", "image"] }
-deepl = "0.6.5"
+deepl = "0.7.3"
 tokio = { version = "1.45.1", features = ["full"] }
 rusqlite = { version = "0.38.0", features = ["bundled", "chrono"] }
 tracing = "0.1.44"
@@ -37,6 +37,8 @@ env = "1.0.1"
 serde_json = "1.0.149"
 http = "1.4.0"
 json-utils = "0.3.5"
+sysinfo = "0.38.4"
+which = { version = "8.0.2", features = ["tracing"] }
 
 [target.'cfg(target_family = "unix")'.dependencies]
 wl-clipboard-rs = "*"

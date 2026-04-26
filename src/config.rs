@@ -1,7 +1,10 @@
+#![allow(non_camel_case_types)]
+
 use serde::{Serialize, Deserialize};
 use tracing::debug;
 use std::{collections::BTreeMap, path::PathBuf};
-use std::fmt;
+use std::fmt::{self, Display};
+use crate::make_enum;
 #[cfg(feature = "scraper")]
 use crate::scraper::{LinkExtractorType, TextExtractorType};
 
@@ -66,6 +69,56 @@ impl Provider {
     pub fn is_local(&self) -> bool {
         matches!(self, Provider::Ollama | Provider::LlamaCpp)
     }
+
+    pub fn is_llama(&self) -> bool {
+        matches!(self, Provider::LlamaCpp)
+    }
+}
+
+make_enum!(CacheType, [f32, f16, bf16, q8_0, q4_0, q4_1, iq4_nl, q5_0, q5_1]);
+
+/// llama.cpp type: local managed by reader, remote or no llama
+#[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
+pub enum LlamaType {
+    Local { cache_type_k: Option<CacheType>, cache_type_v: Option<CacheType>, flash_attn: Option<bool>, ctx_size: Option<u32>, n_cpu_moe: Option<u16>, reasoning_budget: Option<u32>, port: Option<u16>, presence_penalty: Option<String> },
+    Remote,
+    #[default]
+    None,
+}
+
+impl Display for LlamaType {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LlamaType::Local { .. } => write!(f, "Local"),
+            LlamaType::Remote => write!(f, "Remote"),
+            LlamaType::None => write!(f, "None"),
+        }
+    }
+}
+
+impl LlamaType {
+    pub const ALL: [LlamaType; 3] = [
+        LlamaType::Local { cache_type_k: None, cache_type_v: None, flash_attn: None, ctx_size: Some(8192), n_cpu_moe: None, reasoning_budget: None, port: Some(8080), presence_penalty: None },
+        LlamaType::Remote,
+        LlamaType::None,
+    ];
+
+    pub fn is_local(&self) -> bool {
+        match self {
+            LlamaType::Local { .. } => true,
+            _ => false,
+        }
+    }
+}
+
+impl From<String> for LlamaType {
+    fn from(value: String) -> Self {
+        match value.to_lowercase().as_str() {
+            "local" => LlamaType::Local { cache_type_k: None, cache_type_v: None, flash_attn: None, ctx_size: Some(8192), n_cpu_moe: None, reasoning_budget: None, port: Some(8080), presence_penalty: None },
+            "remote" => LlamaType::Remote,
+            _ => LlamaType::None,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
@@ -76,11 +129,18 @@ pub struct AiChatConfig {
     pub model: String,
     pub provider: Provider,
     pub temperature: Option<f64>,
+    pub llama_type: Option<LlamaType>,
 }
 
 impl fmt::Display for AiChatConfig {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,"{}",self.name)
+    }
+}
+
+impl AiChatConfig {
+    pub fn is_llama_local(&self) -> bool {
+        self.llama_type.as_ref().is_some_and(|t| t.is_local())
     }
 }
 
@@ -111,7 +171,7 @@ pub struct Config {
     pub ai_chat: String,
     pub ai_role: String,
     pub ai_preamble: String,
-    
+    pub deepl_lang: Option<deepl::Lang>,
 
     pub new_ai: Option<AiChatConfig>,
     #[cfg(feature = "scraper")]
@@ -159,7 +219,8 @@ impl Default for Config {
             ai_chat: String::from("gpt"), 
             ai_role: String::new(), 
             ai_preamble: String::new(), 
-            new_ai: None 
+            new_ai: None,
+            deepl_lang: None,
         }
     }
 }
@@ -211,6 +272,11 @@ impl Config {
 
     pub fn ocr_models_found(&self) -> bool {
         Path::new(&format!("{}", self.ocr_models)).exists()
+    }
+
+    pub fn is_local_llama(&self) -> bool {
+        self.get_ai_config()
+            .is_some_and(|c| c.provider == Provider::LlamaCpp && c.llama_type.as_ref().is_some_and(|d| d.is_local()))
     }
 
     pub fn is_new(&self) -> bool {
