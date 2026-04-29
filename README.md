@@ -57,6 +57,14 @@ Just show the paths to model and mmproj (if you want vision) and then use the bu
 - ⬛️ - not available
 For Ollama users to the left of it there is a "toggle keep alive" button so it does not unload a model while reading.
 
+The other buttons (left to right)
+- copy AI response to the text tab
+- copy response to notes
+- toggle Ollama keep alive
+- llama.cpp state
+- cancel currently running AI prompt
+- clear the conversation history
+
 ## Improved prompter
 <img width="453" height="207" alt="image" src="https://github.com/user-attachments/assets/e606b71d-6115-43bb-ac62-4ba410d3c354" />
 Improved prompter lets you choose whether to include the text and/or a loaded image with your prompt.
