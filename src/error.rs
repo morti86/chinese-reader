@@ -2,8 +2,6 @@ use std::string::FromUtf8Error;
 
 use image::ImageError;
 use rig::{agent::StreamingError, completion::CompletionError};
-#[cfg(feature = "scraper")]
-use scraper::error::SelectorErrorKind;
 use tokio::task::JoinError;
 
 pub type ReaderResult<T> = Result<T, ReaderError>;
@@ -130,9 +128,14 @@ impl From<rig::model::ModelListingError> for ReaderError {
     }
 }
 
-#[cfg(feature = "scraper")]
-impl From<SelectorErrorKind<'_>> for ReaderError {
-    fn from(e: SelectorErrorKind<'_>) -> Self {
-        Self::Scraper(e.to_string())
+impl From<rig::EmptyListError> for ReaderError {
+    fn from(value: rig::EmptyListError) -> Self {
+        Self::Ai(value.to_string())
+    }
+}
+
+impl From<tokio::sync::mpsc::error::SendError<crate::ai::ChatCommand>> for ReaderError {
+    fn from(value: tokio::sync::mpsc::error::SendError<crate::ai::ChatCommand>) -> Self {
+        Self::Ai(value.to_string())
     }
 }

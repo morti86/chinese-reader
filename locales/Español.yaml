@@ -89,3 +89,4 @@ prompt_explain: Explica el significado de {} en el texto dado
 prompt_grammar: Explica la estructura gramatical de la frase {}
 prompt_summary: Resume el texto adjunto
 prompt_translate: Traducir {} al español
+ai_translate: Traducir

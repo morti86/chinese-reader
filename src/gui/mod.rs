@@ -6,15 +6,13 @@ use crate::ai::{CancellationToken, ChatCommand, ChatEvent};
 use crate::cedict::Cedict;
 use crate::error::ReaderError;
 use crate::ocr::dl::{DlCommand, DlEvent};
-#[cfg(feature = "scraper")]
-use crate::scraper::{LinkExtractorType, ScraperCommand, ScraperEvent, TextExtractorType};
 use crate::{ai, make_enum, modal, ocr};
 use crate::config::{AiChatConfig, Config};
 use iced::widget::text_editor::{Content, Position};
 use iced::{clipboard, Element, Subscription, Theme};
 use iced::widget::{text_editor,markdown};
 use rig::completion::Message as Rmsg;
-use rig::message::{Document, DocumentMediaType, UserContent};
+use rig::message::{Document, DocumentMediaType, Image, ImageMediaType, UserContent, MimeType};
 use rig::OneOrMany;
 use rusqlite::Connection;
 use tokio::sync::RwLock;
@@ -25,9 +23,49 @@ use tracing::{debug, error, info, warn};
 use std::path::PathBuf;
 use std::sync::Arc;
 use message::Message;
+use base64::prelude::*;
 
 make_enum!(SidebarMode, [AI, Notes, Dictionary]);
 make_enum!(TextOption, [Load, Save, Add, New, Delete]);
+
+#[derive(PartialEq, Clone, Debug)]
+pub enum Prompt {
+    Explain,
+    Grammar,
+    Translate,
+    Meaning,
+    Custom,
+}
+
+impl Prompt {
+    const ALL: &[Prompt] = &[Prompt::Explain, Prompt::Grammar, Prompt::Translate, Prompt::Meaning, Prompt::Custom];
+
+    pub fn get_value(&self) -> String {
+        match self {
+            Prompt::Grammar => t!("prompt_grammar").to_string(),
+            Prompt::Explain => t!("prompt_explain").to_string(),
+            Prompt::Translate => t!("prompt_translate").to_string(),
+            Prompt::Meaning => t!("prompt_meaning").to_string(),
+            _ => String::new(),
+        }
+    }
+
+    pub fn get_label(&self) -> String {
+        match self {
+            Prompt::Grammar => t!("ai_grammar").to_string(),
+            Prompt::Explain => t!("ai_explain").to_string(),
+            Prompt::Translate => t!("ai_translate").to_string(),
+            Prompt::Meaning => t!("ai_meaning").to_string(),
+            Prompt::Custom => String::from("<...>"),
+        }
+    }
+}
+
+impl std::fmt::Display for Prompt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.get_label())
+    }
+}
 
 macro_rules! sender_send {
     ($sender:expr, $value:expr, $message:expr) => {
@@ -39,6 +77,12 @@ macro_rules! sender_send {
                 Err(e) => Message::ShowModal(e.to_string()),
             }
         })
+    };
+}
+
+macro_rules! paste {
+    ($editor:expr, $value:expr) => {
+        $editor.perform(text_editor::Action::Edit( text_editor::Edit::Paste( Arc::new($value) ) ));
     };
 }
 
@@ -55,8 +99,6 @@ pub enum AppState {
     Settings,
     AiSettings,
     TextManage(TextOption),
-    #[cfg(feature = "scraper")]
-    Scraper,
     Notes,
     AnkiStats,
     FileDl,
@@ -88,8 +130,6 @@ pub struct App {
     dl_sender: Option<Sender<DlCommand>>,
     cts: Option<Sender<CancellationToken>>,
     l_sender: Option<Sender<LlamaCommand>>,
-    #[cfg(feature = "scraper")]
-    sc_sender: Option<Sender<ScraperCommand>>,
 
     temp_document: Option<Document>,
     documents: Vec<Doc>,
@@ -98,17 +138,6 @@ pub struct App {
 
     note_edited: bool,
     new_text: bool,
-
-    #[cfg(feature = "scraper")]
-    scraper_progress: f32,
-    #[cfg(feature = "scraper")]
-    scraper_to: f32,
-    #[cfg(feature = "scraper")]
-    scraper_url: String,
-    #[cfg(feature = "scraper")]
-    scraper_file: String,
-    #[cfg(feature = "scraper")]
-    scraper_single: bool,
 
     text_mode: TextMode,
     sc_new: bool,
@@ -123,6 +152,11 @@ pub struct App {
 
     ollama_alive: bool,
     llama_state: String,
+
+    prompt: Option<Prompt>,
+    custom_prompt: text_editor::Content,
+    text_ctx: bool,
+    image_include: bool,
 }
 
 impl Default for App {
@@ -268,8 +302,6 @@ impl App {
             l_sender: None,
             sender: None,
             cts: None,
-            #[cfg(feature = "scraper")]
-            sc_sender: None,
 
             temp_document: None,
             documents,
@@ -278,17 +310,6 @@ impl App {
 
             note_edited: false,
             new_text: false,
-
-            #[cfg(feature = "scraper")]
-            scraper_progress: 0.0,
-            #[cfg(feature = "scraper")]
-            scraper_to: 1.0,
-            #[cfg(feature = "scraper")]
-            scraper_url: String::new(),
-            #[cfg(feature = "scraper")]
-            scraper_file: String::new(),
-            #[cfg(feature = "scraper")]
-            scraper_single: false,
 
             text_mode: TextMode::Raw,
             text_md: markdown::Content::new(),
@@ -304,11 +325,23 @@ impl App {
 
             ollama_alive: false,
             llama_state: String::new(),
+
+            prompt: None,
+            custom_prompt: text_editor::Content::new(),
+            text_ctx: false,
+            image_include: false,
         }
     }
 
     pub fn theme(&self) -> Theme {
         self.conf.window.theme()
+    }
+
+    pub fn is_vision_ai_selected(&self) -> bool {
+        self.get_ai_config()
+            .is_some_and(|ai| 
+                !ai.is_llama_local() 
+                || ai.is_local_llama_vision() )
     }
 
     fn get_ai_config_mut(&mut self) -> Option<&mut AiChatConfig> {
@@ -336,13 +369,8 @@ impl App {
 
         let ai_chat_sub = Subscription::run(ai::connect).map(Message::AiChatEvent);
         let ai_llama_sub = Subscription::run(ai::llama::connect).map(Message::AiLlamaEvent);
-        #[cfg(feature = "scraper")]
-        let scr_sub = Subscription::run(crate::scraper::connect).map(Message::ScraperEvent);
-        #[cfg(feature = "scraper")]
-        let subs = vec![ai_chat_sub, scr_sub];
         let s_close = iced::window::close_requests().map(|_| Message::BeforeExit);
         let dl_sub = Subscription::run(ocr::dl::connect).map(Message::DlEvent);
-        #[cfg(not(feature = "scraper"))]
         let subs = vec![ai_chat_sub, dl_sub, ai_llama_sub, s_close];
         Subscription::batch(subs)
     }
@@ -364,10 +392,6 @@ impl App {
             AppState::TextManage(opt) => {
                 settings::text_action(self, *opt).into()
             }
-            #[cfg(feature = "scraper")]
-            AppState::Scraper => {
-                settings::scrapper(self).into()
-            }
             AppState::Notes => {
                 settings::notes(self).into()
             }
@@ -388,7 +412,8 @@ impl App {
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {
         match message {
             Message::BeforeExit => {
-                if let Some(sender) = self.l_sender.clone() {
+                if self.llama_state == String::from("🟩")
+                    && let Some(sender) = self.l_sender.clone() {
                     return sender_send!(sender, LlamaCommand::Stop, Message::Exit);
                 } else {
                     return iced::exit();
@@ -425,8 +450,24 @@ impl App {
             Message::TextAction(ta) => {
                 self.state = AppState::TextManage(ta);
             }
+            Message::AiCustomPromptChanged(a) => {
+                self.custom_prompt.perform(a);
+            }
+            Message::AiPromptSelected(p) => {
+                self.custom_prompt = Content::new();
+                if p == Prompt::Explain {
+                    self.text_ctx = true;
+                }
+                self.prompt = Some(p);
+            }
             Message::SidebarModeChanged(sm) => {
                 self.sidebar_mode = sm;
+            }
+            Message::AiTextCtxToggle(x) => {
+                self.text_ctx = x;
+            }
+            Message::AiImageIncludeToggle(x) => {
+                self.image_include = x;
             }
             Message::AiSettings => {
                 self.state = AppState::AiSettings;
@@ -499,16 +540,24 @@ impl App {
                             Ok(r) => Message::SetImage(r),
                         }
                     })
+                } else {
+                    self.image_include = false;
                 }
 
             }
             Message::SetImage(r) => {
-                let mut rw = self.image_data.blocking_write();
-                *rw = r;
+                let a = self.image_data.clone();
+                return iced::Task::perform(async move {
+                    let mut rw = a.write().await;
+                    *rw = r;
+                }, |_| Message::Void);
             }
             Message::ClearImage => {
-                let mut rw = self.image_data.blocking_write();
-                *rw = vec![];
+                let a = self.image_data.clone();
+                return iced::Task::perform(async move {
+                    let mut rw = a.write().await;
+                    *rw = vec![];
+                }, |_| Message::Void);
             }
             Message::OcrFile => {
                 let file_name = rfd::FileDialog::new()
@@ -686,24 +735,6 @@ impl App {
                 self.ai_changed = true;
             }
             Message::SettingsSave => {
-                #[cfg(feature = "scraper")]
-                if self.sc_new {
-                    if let Some(l_ex) = self.conf.l_ex.as_ref() {
-                        if !l_ex.is_empty() {
-                            self.conf.link_ex.push(l_ex.clone());
-                        } else {
-                            self.conf.l_ex = None;
-                        }
-                    }
-                    if let Some(t_ex) = self.conf.t_ex.as_ref() {
-                        if !t_ex.is_empty() {
-                            self.conf.text_ex.push(t_ex.clone());
-                        } else {
-                            self.conf.t_ex = None;
-                        }
-                    }
-                }
-
                 match toml::to_string(&self.conf) {
                     Ok(s) => {
                         return iced::Task::perform(async move {
@@ -771,6 +802,11 @@ impl App {
                         self.answer_text.push_str("\n");
                         self.answer_raw.push_str("\n");
                         self.llama_state = String::from("⬛️");
+                        self.chat_history.push(Rmsg::Assistant 
+                            { 
+                                id: Some(String::from("**agent**")),
+                                content: OneOrMany::one(rig::message::AssistantContent::Text(rig::agent::Text::from(self.answer_raw.clone()))) 
+                            });
                     }
                     ChatEvent::ToolCall { id, function, args } => {
                         debug!("ToolCall: {}/{}: {}", id, function, args);
@@ -779,8 +815,6 @@ impl App {
                         debug!("Reasoning: {:?}", re);
                     }
                     ChatEvent::ReasoningDelta(d) => { 
-                        //self.answer_text.push_str(d.as_str());
-                        // self.answer_raw.push_str(d.as_str());
                         debug!("Reasoning delta: {}", d);
                         self.llama_state = String::from("🟪");
                     }
@@ -797,11 +831,25 @@ impl App {
                 self.answer_text.push_str(&s);
                 self.answer_raw = s;
             }
-            Message::AiStop => {
-                if let Some(cts) = &self.cts
-                    && let Err(e) = cts.blocking_send(CancellationToken {}) {
-                        error!("Error stopping: {}", e);
+            Message::Prompt => {
+                let prompt = match self.prompt.as_ref() {
+                    Some(Prompt::Custom) => self.custom_prompt.text(),
+                    Some(prompt) => prompt.get_value(),
+                    None => String::new(),
+                };
+
+                self.answer_raw = String::new();
+                return self.do_prompt(prompt.as_str(), self.text_ctx);
+            }
+            Message::AiHistoryClear => {
+                self.chat_history.clear();
+                self.answer_text = markdown::Content::new();
+            }
+            Message::AiCurrentTextToEditor => {
+                if !self.dtn_append {
+                    self.text = Content::new();
                 }
+                paste!(self.text, self.answer_raw.clone());
             }
             Message::PromptMeaning => {
                 self.answer_raw = String::new();
@@ -998,14 +1046,6 @@ impl App {
             Message::TextTitleChange(t) => {
                 self.loaded_text.title = t;
             }
-            #[cfg(feature = "scraper")]
-            Message::LinkExtractorChanged(le) => {
-                self.conf.l_ex = Some(le);
-            }
-            #[cfg(feature = "scraper")]
-            Message::TextExtractorChanged(te) => {
-                self.conf.t_ex = Some(te);
-            }
             Message::LinkClicked(e) => {
                 debug!("URL: {}", e);
                 let data = e.to_string();
@@ -1088,187 +1128,6 @@ impl App {
             }
             Message::AppDataChanged(a) => {
                 self.conf.db = Some(a);
-            }
-            #[cfg(feature = "scraper")]
-            Message::Scraper => {
-                self.state = AppState::Scraper;
-            }
-            #[cfg(feature = "scraper")]
-            Message::StartScraper => {
-                let name = self.scraper_file.clone();
-
-                if self.conf.l_ex.is_none() || self.conf.t_ex.is_none() {
-                    return iced::Task::none();
-                }
-
-                let l_ext = self.conf.l_ex.clone().unwrap();
-                let t_ext = self.conf.t_ex.clone().unwrap();
-                let interval = self.conf.scraper_sleep.unwrap_or(500);
-                                
-                if let Some(sender) = &self.sc_sender {
-                    let sender = sender.clone();
-                    return iced::Task::perform(async move {
-                        sender.send(ScraperCommand::Start { name, interval, l_ext, t_ext }).await
-                        }, |r| {
-                        if let Err(e) = r {
-                            Message::ShowModal(e.to_string())
-                        } else {
-                            Message::Void
-                        }
-                    });
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::LX(nc) => {
-                match self.conf.l_ex.as_ref() {
-                    Some(LinkExtractorType::PatternExtractor { pattern, n_chapters: _, name }) => {
-                        if let Ok(nc) = nc.parse::<usize>() {
-                            self.conf.l_ex.replace(LinkExtractorType::PatternExtractor { pattern: pattern.clone(), n_chapters: nc , name: name.clone() });
-                        }
-                    }
-                    _ => {
-                        debug!("NChapters::None");
-                    }
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::LN(nm) => {
-                match self.conf.l_ex.as_ref() {
-                    Some(LinkExtractorType::PatternExtractor { pattern, n_chapters, name: _ }) => {
-                        self.conf.l_ex.replace(LinkExtractorType::PatternExtractor { pattern: pattern.clone() , name: nm, n_chapters: *n_chapters });
-                    }
-                    Some(LinkExtractorType::MainPageExtractor { url, pattern, name: _ }) => {
-                        self.conf.l_ex.replace(LinkExtractorType::MainPageExtractor { url: url.clone(), pattern: pattern.clone(), name: nm });
-                    }
-                    _ => debug!("Pattern::None"),
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::LU(u) => {
-                match self.conf.l_ex.as_ref() {
-                    Some(LinkExtractorType::MainPageExtractor { url: _, pattern, name }) => {
-                        self.conf.l_ex.replace(LinkExtractorType::MainPageExtractor { pattern: pattern.clone() , name: name.clone(), url: u.clone() });
-                    }
-                    _ => debug!("LU::None"),
-                }
-
-            }
-            #[cfg(feature = "scraper")]
-            Message::LP(pt) => {
-                match self.conf.l_ex.as_ref() {
-                    Some(LinkExtractorType::PatternExtractor { pattern: _, n_chapters, name }) => {
-                        self.conf.l_ex.replace(LinkExtractorType::PatternExtractor { pattern: pt, name: name.clone(), n_chapters: *n_chapters });
-                    }
-                    Some(LinkExtractorType::MainPageExtractor { url, pattern: _, name }) => {
-                        self.conf.l_ex.replace(LinkExtractorType::MainPageExtractor { url: url.clone(), pattern: pt, name: name.clone() });
-                    }
-                    _ => debug!("Pattern::None"),
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::TP(t) => {
-                match self.conf.t_ex.as_ref() {
-                    Some(TextExtractorType::PatternTextExtractor { title_pattern, pattern: _, name }) => {
-                        self.conf.t_ex.replace(TextExtractorType::PatternTextExtractor { title_pattern: title_pattern.clone(), pattern: t, name: name.clone() });
-                    }
-                    _ => debug!("TP::None"),
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::TN(t) => {
-                match self.conf.t_ex.as_ref() {
-                    Some(TextExtractorType::PatternTextExtractor { title_pattern, pattern, name: _ }) => {
-                        self.conf.t_ex.replace(TextExtractorType::PatternTextExtractor { title_pattern: title_pattern.clone(), pattern: pattern.clone(), name: t });
-                    }
-                    _ => debug!("TP::None"),
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::TT(t) => {
-                match self.conf.t_ex.as_ref() {
-                    Some(TextExtractorType::PatternTextExtractor { title_pattern: _, pattern, name }) => {
-                        if t.is_empty() {
-                            self.conf.t_ex.replace(TextExtractorType::PatternTextExtractor { title_pattern: None, pattern: pattern.clone(), name: name.clone() });
-                        } else {
-                            self.conf.t_ex.replace(TextExtractorType::PatternTextExtractor { title_pattern: Some(t), pattern: pattern.clone(), name: name.clone() });
-                        }
-                    }
-                    _ => debug!("TT::None"),
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::ScraperSleepChanged(iv) => {
-                let iv = iv.parse::<u64>().unwrap_or(500);
-                self.conf.scraper_sleep = Some(iv);
-                if let Some(sender) = &self.sc_sender {
-                    let sender = sender.clone();
-                    return iced::Task::perform(async move {
-                        sender.send(ScraperCommand::AdjustInterval(iv)).await
-                    }, |r| {
-                        if let Err(e) = r {
-                            Message::ShowModal(e.to_string())
-                        } else {
-                            Message::Void
-                        }
-                    });
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::StopScraper => {
-                if let Some(sender) = &self.sc_sender {
-                    let sender = sender.clone();
-                    self.scraper_progress = 0.0;
-                    return iced::Task::perform(async move {
-                        sender.send(ScraperCome5femand::Stop).await
-                    }, |r| {
-                        if let Err(e) = r {
-                            Message::ShowModal(e.to_string())
-                        } else {
-                            Message::Void
-                        }
-                    });
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::ScraperEvent(p) => {
-                match p {
-                    ScraperEvent::Progress(pr) => {
-                        self.scraper_progress = pr.0;
-                        self.scraper_to = pr.1;
-                    }
-                    ScraperEvent::Error(er) => {
-                        self.scraper_progress = 0.0;
-                        return iced::Task::done(Message::ShowModal(er));
-                    }
-                    ScraperEvent::Finished => {
-                        self.scraper_progress = 0.0;
-                    }
-                    ScraperEvent::Ready(sender) => {
-                        self.sc_sender = Some(sender);
-                    }
-                }
-            }
-            #[cfg(feature = "scraper")]
-            Message::ScNew => {
-                self.sc_new = true;
-                self.conf.l_ex = Some(LinkExtractorType::PatternExtractor { pattern: String::new(), n_chapters: 0, name: String::new() });
-                self.conf.t_ex = Some(TextExtractorType::PatternTextExtractor { title_pattern: None, pattern: "p".to_string(), name: String::new() });
-            }
-            #[cfg(feature = "scraper")]
-            Message::ScraperUrlChanged(u) => {
-                self.scraper_url = u;
-            }
-            #[cfg(feature = "scraper")]
-            Message::ScraperFileChanged(r) => {
-                self.scraper_file = r;
-            }
-            #[cfg(feature = "scraper")]
-            Message::ScraperSingle(ss) => {
-                self.scraper_single = ss;
-            }
-            #[cfg(feature = "scraper")]
-            Message::ScraperCurrentFile => {
-                self.scraper_file = self.conf.db.clone().unwrap_or_default();
             }
             Message::TextMode(tm) => {
                 if tm == TextMode::Md {
@@ -1356,6 +1215,16 @@ impl App {
                 }
                 return self.llama_command();
             }
+            Message::AiLlamaMmprojPicked => {
+                let file_name = rfd::FileDialog::new()
+                    .add_filter("model", &["gguf", "safetensors"])
+                    .pick_file();
+                if let Some(c) = self.get_ai_config_mut()
+                    && let Some(crate::config::LlamaType::Local { mmproj, .. })  = c.llama_type.as_mut() {
+                    *mmproj = file_name.map(|x| format!("{}", x.to_string_lossy()));
+                }
+                return self.llama_command();
+            }
             Message::AiLlamaTypeSelected(ly) => {
                 if let Some(c) = self.get_ai_config_mut() {
                     c.llama_type = Some(ly.clone());
@@ -1407,6 +1276,13 @@ impl App {
                     
                     *flash_attn = Some(fl);
                     return self.llama_command();
+                }
+            }
+            Message::AiCancelPrompt => {
+                if let Some(a) = self.cts.clone() {
+                    return iced::Task::perform(async move {
+                        a.send(CancellationToken).await
+                    }, |_| Message::Void);
                 }
             }
             Message::AiNCpuMoeChanged(nc) => {
@@ -1531,6 +1407,9 @@ impl App {
                     LlamaEvent::LocalFoundNotRunning => {
                         self.llama_state = String::from("⬜️");
                     }
+                    LlamaEvent::LocalFoundRunning => {
+                        self.llama_state = String::from("🟦");
+                    }
                 }
             }
             Message::AiLlamaToggle => {
@@ -1627,52 +1506,61 @@ impl App {
     }
 
     fn do_prompt(&mut self, question: &str, with_text: bool) -> iced::Task<Message> {
-        if let Some(selection) = self.text.selection() {
-            let question = question.replace("{}", selection.as_str());
-            let prompt = rig::message::Text::from(question.as_str());
-            let line = self.text.cursor().position.line;
-            let text_line = self.text.text();
+        if self.text.selection().is_some() || self.image_include {
+            if let Some(sender) = self.sender.clone() {
+                let selection = self.text.selection().unwrap_or_default();
+                let question = question.replace("{}", selection.as_str());
+                let prompt = rig::message::Text::from(question.as_str());
+                let line = self.text.cursor().position.line;
+                let text_line = self.text.text();
+                let image_include = self.image_include;
+                let image_data = self.image_data.clone();
+                let chat_history = self.chat_history.clone();
+                self.answer_text.push_str(&format!(">{}\n\n", question));
+                self.chat_history.push(Rmsg::User { content: OneOrMany::one(UserContent::Text(prompt.clone())) });
 
-            let content = if with_text {
-                let text = Document {
-                    data: rig::message::DocumentSourceKind::String( text_line.lines().nth(line).unwrap_or_default().to_string() ),
-                    media_type: Some(DocumentMediaType::TXT),
-                    additional_params: None,
-                };
-                OneOrMany::many(vec![UserContent::Text(prompt), UserContent::Document(text)])  
-            } else {
-                Ok( OneOrMany::one(UserContent::Text(prompt) ) )
-            };
-
-            match  content {
-                Ok(content) => {
-                    let message = Rmsg::User { content };
- 
-                    let conf = self.conf.get_ai_config();
-                    if conf.is_none() {
-                        return iced::Task::done(Message::ShowModal(String::from("No config found")));
-                    }
-                    let chat_history = self.chat_history.clone();
-
-                    if let Some(sender) = &self.sender {
-                        let sender = sender.clone();
-                        return iced::Task::perform(async move {
-                            let message = message.clone();
-                            sender.send(ChatCommand::Request { message , chat_history }).await
-                        }, |r| {
-                            match r {
-                                Ok(_) => Message::Void,
-                                Err(e) => Message::ShowModal(e.to_string()),
-                            }
-                        });
+                
+                return iced::Task::perform(async move {
+                    let content = if with_text | image_include {
+                        let mut c_vec = vec![UserContent::Text(prompt)];
+                        if with_text {
+                            debug!("do_prompt -> with text");
+                            let text = Document {
+                                data: rig::message::DocumentSourceKind::String( text_line.lines().nth(line).unwrap_or_default().to_string() ),
+                                media_type: Some(DocumentMediaType::TXT),
+                                additional_params: None,
+                            };
+                            c_vec.push(UserContent::Document(text));
+                        }
+                        if image_include && !image_data.read().await.is_empty() {
+                            debug!("do_prompt -> include image");
+                            let infer = infer::Infer::new();
+                            let data = image_data.read().await.clone();
+                            let media_type = infer.get(&data)
+                                .map(|t|  ImageMediaType::from_mime_type(t.mime_type())).flatten();
+                            let image = Image {
+                                data: rig::message::DocumentSourceKind::Base64(BASE64_STANDARD.encode(data) ),
+                                media_type,
+                                detail: Some(rig::message::ImageDetail::Auto),
+                                additional_params: None,
+                            };
+                            c_vec.push(UserContent::Image(image));
+                        }
+                        OneOrMany::many(c_vec)  
                     } else {
-                        iced::Task::none()
+                        Ok( OneOrMany::one(UserContent::Text(prompt) ) )
+                    }?;
+                    let message = Rmsg::User { content };
+
+                    Ok(sender.send(ChatCommand::Request { message , chat_history }).await?)
+                }, |r: crate::error::ReaderResult<()>| {
+                    match r {
+                        Ok(_) => Message::Void,
+                        Err(e) => Message::ShowModal(e.to_string()),
                     }
-                }
-                Err(e) => {
-                    iced::Task::done(Message::ShowModal(e.to_string()))
-                }
-            }
+                });
+
+            } else { iced::Task::none() }
         } else {
             iced::Task::none()
         }

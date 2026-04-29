@@ -3,8 +3,6 @@ use std::fmt::Debug;
 use iced::widget::{markdown::Uri, text_editor};
 
 use crate::{ai::ChatEvent, config::LlamaType};
-#[cfg(feature = "scraper")]
-use crate::scraper::{LinkExtractorType, TextExtractorType};
 
 #[derive(Clone,Debug)]
 pub enum FileToDl {
@@ -58,7 +56,6 @@ pub enum Message {
     AiProviderChange(crate::config::Provider),
     AiNoStreamResult(String),
     NewAi,
-    AiStop,
     AiOllamaKeepAlive,
     AiOllamaKeepAliveRes(bool),
     AiOllamaKeepAliveModal{ msg: String, ka: bool },
@@ -74,6 +71,16 @@ pub enum Message {
     AiLlamaEvent(crate::ai::llama::LlamaEvent),
     AiLlamaToggle,
     AiPresencePenaltyChanged(String),
+    AiLlamaMmprojPicked,
+    AiCancelPrompt,
+
+    AiPromptSelected(crate::gui::Prompt),
+    AiCustomPromptChanged(text_editor::Action),
+    AiTextCtxToggle(bool),
+    AiImageIncludeToggle(bool),
+    Prompt,
+    AiCurrentTextToEditor,
+    AiHistoryClear,
 
     SidebarModeChanged(super::SidebarMode),
 
@@ -117,25 +124,6 @@ pub enum Message {
 
     DlEvent(crate::ocr::dl::DlEvent),
 
-    #[cfg(feature = "scraper")]
-    Scraper,
-    #[cfg(feature = "scraper")]
-    StartScraper,
-    #[cfg(feature = "scraper")]
-    StopScraper,
-    #[cfg(feature = "scraper")]
-    ScraperEvent(crate::scraper::ScraperEvent),
-    #[cfg(feature = "scraper")]
-    ScraperSleepChanged(String),
-    #[cfg(feature = "scraper")]
-    ScraperUrlChanged(String),
-    #[cfg(feature = "scraper")]
-    ScraperFileChanged(String),
-    #[cfg(feature = "scraper")]
-    ScraperSingle(bool),
-    #[cfg(feature = "scraper")]
-    ScraperCurrentFile,
-
     Language(String),
 
     AppDataChanged(String),
@@ -145,28 +133,6 @@ pub enum Message {
     //MarkDown(bool),
 
     TextMode(super::TextMode),
-
-    #[cfg(feature = "scraper")]
-    LP(String),
-    #[cfg(feature = "scraper")]
-    TP(String),
-    #[cfg(feature = "scraper")]
-    LX(String),
-    #[cfg(feature = "scraper")]
-    LN(String),
-    #[cfg(feature = "scraper")]
-    TN(String),
-    #[cfg(feature = "scraper")]
-    TT(String),
-    #[cfg(feature = "scraper")]
-    LU(String),
-
-    #[cfg(feature = "scraper")]
-    LinkExtractorChanged(LinkExtractorType),
-    #[cfg(feature = "scraper")]
-    ScNew,
-    #[cfg(feature = "scraper")]
-    TextExtractorChanged(TextExtractorType),
 
     Notes,
     NotesExport,

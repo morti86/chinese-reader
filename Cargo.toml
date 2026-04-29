@@ -1,6 +1,6 @@
 [package]
 name = "cnreader"
-version = "1.1.5"
+version = "1.2.0"
 edition = "2024"
 
 [dependencies]
@@ -24,7 +24,6 @@ ndarray = { version = "0.17.2", features = ["serde", "blas"] }
 ort = "2.0.0-rc.11"
 imageproc = "0.26.1"
 rfd = "0.15.4"
-scraper = { version = "0.24.0", optional = true }
 chrono = "0.4.42"
 regex = "1.12.2"
 async-trait = "0.1.89"
@@ -39,6 +38,8 @@ http = "1.4.0"
 json-utils = "0.3.5"
 sysinfo = "0.38.4"
 which = { version = "8.0.2", features = ["tracing"] }
+base64 = "0.22.1"
+infer = "0.19.0"
 
 [target.'cfg(target_family = "unix")'.dependencies]
 wl-clipboard-rs = "*"
@@ -48,8 +49,6 @@ clipboard-win = "5.4.0"
 winapi = "0.3.9"
 shell32-sys = "0.1.2"
 
-[features]
-scraper = ["dep:scraper"]
 
 # Add this section for Debian packaging
 [package.metadata.deb]

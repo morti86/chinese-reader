@@ -191,17 +191,6 @@ pub fn get_image() -> Vec<u8> {
     vec![]
 }
 
-/*
-pub fn get_text() -> ReaderResult<String> {
-    let c = get_contents(ClipboardType::Regular, Seat::Unspecified, MimeType::Text);
-    let mut content = vec![];
-    if let Ok((mut pipe, _)) = c {
-        pipe.read_to_end(&mut content).unwrap();
-        return Ok(String::from_utf8(content)?)
-    }
-    Ok(String::new())
-}*/
-
 pub fn random_name() -> String {
     let mut rng = rand::rng();
     const LENGTH: usize = 8; // You can adjust this length as needed

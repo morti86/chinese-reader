@@ -41,7 +41,7 @@ pub fn run(theme: &str) -> Result<(), iced::Error> {
         if theme.to_string() == e.to_string() {
             return iced::application(gui::App::new, gui::App::update, gui::App::view)
                 .theme(gui::App::theme)
-                .window_size(iced::Size::new(1400.0,800.0))
+                .window_size(iced::Size::new(1500.0,850.0))
                 .subscription(gui::App::subscription)
                 .exit_on_close_request(false)
                 .font(FONT)
@@ -50,6 +50,7 @@ pub fn run(theme: &str) -> Result<(), iced::Error> {
     }
     iced::application(gui::App::default, gui::App::update, gui::App::view)
         .subscription(gui::App::subscription)
+        .window_size(iced::Size::new(1500.0,850.0))
         .exit_on_close_request(false)
         .font(FONT)
         .run()

@@ -5,8 +5,6 @@ use tracing::debug;
 use std::{collections::BTreeMap, path::PathBuf};
 use std::fmt::{self, Display};
 use crate::make_enum;
-#[cfg(feature = "scraper")]
-use crate::scraper::{LinkExtractorType, TextExtractorType};
 
 use crate::utils::{Level, random_name, url_for_provider};
 use std::path::Path;
@@ -80,7 +78,17 @@ make_enum!(CacheType, [f32, f16, bf16, q8_0, q4_0, q4_1, iq4_nl, q5_0, q5_1]);
 /// llama.cpp type: local managed by reader, remote or no llama
 #[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
 pub enum LlamaType {
-    Local { cache_type_k: Option<CacheType>, cache_type_v: Option<CacheType>, flash_attn: Option<bool>, ctx_size: Option<u32>, n_cpu_moe: Option<u16>, reasoning_budget: Option<u32>, port: Option<u16>, presence_penalty: Option<String> },
+    Local { 
+        cache_type_k: Option<CacheType>, 
+        cache_type_v: Option<CacheType>, 
+        flash_attn: Option<bool>, 
+        ctx_size: Option<u32>, 
+        n_cpu_moe: Option<u16>, 
+        reasoning_budget: Option<u32>, 
+        port: Option<u16>, 
+        presence_penalty: Option<String>,
+        mmproj: Option<String>,
+    },
     Remote,
     #[default]
     None,
@@ -98,7 +106,17 @@ impl Display for LlamaType {
 
 impl LlamaType {
     pub const ALL: [LlamaType; 3] = [
-        LlamaType::Local { cache_type_k: None, cache_type_v: None, flash_attn: None, ctx_size: Some(8192), n_cpu_moe: None, reasoning_budget: None, port: Some(8080), presence_penalty: None },
+        LlamaType::Local { 
+            cache_type_k: None, 
+            cache_type_v: None, 
+            flash_attn: None, 
+            ctx_size: Some(8192),
+            n_cpu_moe: None, 
+            reasoning_budget: None, 
+            port: Some(8080), 
+            presence_penalty: None,
+            mmproj: None,
+        },
         LlamaType::Remote,
         LlamaType::None,
     ];
@@ -109,12 +127,29 @@ impl LlamaType {
             _ => false,
         }
     }
+
+    pub fn is_vision(&self) -> bool {
+        match self {
+            LlamaType::Local { mmproj, .. } => mmproj.is_some(),
+            _ => false,
+        }
+    }
 }
 
 impl From<String> for LlamaType {
     fn from(value: String) -> Self {
         match value.to_lowercase().as_str() {
-            "local" => LlamaType::Local { cache_type_k: None, cache_type_v: None, flash_attn: None, ctx_size: Some(8192), n_cpu_moe: None, reasoning_budget: None, port: Some(8080), presence_penalty: None },
+            "local" => LlamaType::Local { 
+                cache_type_k: None, 
+                cache_type_v: None, 
+                flash_attn: None, 
+                ctx_size: Some(8192), 
+                n_cpu_moe: None, 
+                reasoning_budget: None, 
+                port: Some(8080), 
+                presence_penalty: None,
+                mmproj: None,
+            },
             "remote" => LlamaType::Remote,
             _ => LlamaType::None,
         }
@@ -141,6 +176,10 @@ impl fmt::Display for AiChatConfig {
 impl AiChatConfig {
     pub fn is_llama_local(&self) -> bool {
         self.llama_type.as_ref().is_some_and(|t| t.is_local())
+    }
+
+    pub fn is_local_llama_vision(&self) -> bool {
+        self.llama_type.as_ref().is_some_and(|x| x.is_vision())
     }
 }
 
@@ -174,16 +213,6 @@ pub struct Config {
     pub deepl_lang: Option<deepl::Lang>,
 
     pub new_ai: Option<AiChatConfig>,
-    #[cfg(feature = "scraper")]
-    pub scraper_sleep: Option<u64>,
-    #[cfg(feature = "scraper")]
-    pub link_ex: Vec<LinkExtractorType>,
-    #[cfg(feature = "scraper")]
-    pub text_ex: Vec<TextExtractorType>,
-    #[cfg(feature = "scraper")]
-    pub l_ex: Option<LinkExtractorType>,
-    #[cfg(feature = "scraper")]
-    pub t_ex: Option<TextExtractorType>,
 }
 
 impl Default for Config {

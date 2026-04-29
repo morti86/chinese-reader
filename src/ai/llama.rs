@@ -21,6 +21,7 @@ pub enum LlamaCommand {
         reasoning_budget: Option<u32>, 
         port: Option<u16>,
         presence_penalty: Option<f32>,
+        mmproj: Option<String>,
     },
     Start,
     Stop,
@@ -32,8 +33,8 @@ impl From<LlamaType> for LlamaCommand {
         match value {
             LlamaType::Local { 
                 cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, 
-                reasoning_budget, port, presence_penalty 
-            } => LlamaCommand::ReadyLocal { model_path: String::new(), cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, 
+                reasoning_budget, port, presence_penalty, mmproj 
+            } => LlamaCommand::ReadyLocal { model_path: String::new(), cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, mmproj,
                 presence_penalty: presence_penalty.map(|c| c.replace(".","").parse::<f32>().ok()).flatten() },
             LlamaType::Remote => LlamaCommand::ReadyRemote { url: String::from("http://localhost:8080") },
             _ => LlamaCommand::DoNothing,
@@ -46,8 +47,8 @@ impl LlamaCommand {
         match self {
             LlamaCommand::ReadyLocal { 
                 model_path: _, cache_type_k, cache_type_v, 
-                flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty 
-            } => LlamaCommand::ReadyLocal { model_path: path.to_string(), cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty },
+                flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty, mmproj 
+            } => LlamaCommand::ReadyLocal { model_path: path.to_string(), cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty, mmproj },
             _ => self,
         }
     }
@@ -66,6 +67,7 @@ pub enum LlamaEvent {
     NoLocalFound,
     LocalFoundNotResponding,
     LocalFoundNotRunning,
+    LocalFoundRunning,
     Running,
     Error(String),
 }
@@ -92,8 +94,9 @@ pub fn connect() -> impl Sipper<Never, LlamaEvent> {
                     n_cpu_moe, 
                     reasoning_budget, 
                     port,
-                    presence_penalty }) => {
-                    ltype = Some(LlamaType::Local { cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty: presence_penalty.map(|c| c.to_string()) });
+                    presence_penalty,
+                    mmproj}) => {
+                    ltype = Some(LlamaType::Local { cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty: presence_penalty.map(|c| c.to_string()), mmproj });
                     laddr = format!("http://127.0.0.1:{}", port.unwrap_or(8080));
                     if model_path.is_empty() {
                         warn!("No model path!");
@@ -147,10 +150,11 @@ pub fn connect() -> impl Sipper<Never, LlamaEvent> {
                     debug!("llama_sipper: do nothing");
                 }
                 Err(_e) => {
-                    let is_running = find_llama_server_pids();
+                    let is_running = child.as_ref().is_some_and(|x| x.id().is_some());
                     let is_healthy = is_llama_server_healthy(&client, &laddr).await;
                     match (is_running, is_healthy) {
-                        (_,true) => output.send(LlamaEvent::Running).await,
+                        (true,true) => output.send(LlamaEvent::Running).await,
+                        (false,true) => output.send(LlamaEvent::LocalFoundRunning).await,
                         (true,false) => output.send(LlamaEvent::LocalFoundNotResponding).await,
                         (false,_) => output.send(LlamaEvent::LocalFoundNotRunning).await,
                     }
@@ -176,10 +180,6 @@ async fn is_llama_server_healthy(client: &reqwest::Client, url: &str) -> bool {
     
     res.ok().map(|resp| resp.status().is_success())
         .unwrap_or(false)
-/*    reqwest::get(url).await
-        .ok()
-        .map(|resp| resp.status().is_success())
-        .unwrap_or(false)*/
 }
 
 /// Finds PIDs of running `llama-server` processes
@@ -203,7 +203,8 @@ async fn start_llama(llama_bin: &PathBuf, ltype: &LlamaType, model_path: &str) -
             n_cpu_moe, 
             reasoning_budget, 
             port,
-            presence_penalty} => {
+            presence_penalty,
+            mmproj} => {
             let mut cmd = Command::new(llama_bin);
             if let Some(cache_type_k) = cache_type_k {
                 cmd.arg("--cache-type-k").arg(cache_type_k.to_string());
@@ -228,6 +229,9 @@ async fn start_llama(llama_bin: &PathBuf, ltype: &LlamaType, model_path: &str) -
             }
             if let Some(presence_penalty) = presence_penalty {
                 cmd.arg("--presence-penalty").arg(presence_penalty.to_string());
+            }
+            if let Some(mmproj) = mmproj {
+                cmd.arg("--mmproj").arg(mmproj.to_string());
             }
             cmd.arg("--port").arg(port.unwrap_or(8080).to_string());
 

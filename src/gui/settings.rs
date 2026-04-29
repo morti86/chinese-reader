@@ -3,8 +3,6 @@ use iced::widget::{Column, Row, TextEditor, button, checkbox, column, container,
 use iced::{Alignment, Element, Font, Padding, Renderer, Theme};
 use crate::cedict::HSK_TOTAL;
 use crate::config::{LlamaType, Provider, Window};
-#[cfg(feature = "scraper")]
-use crate::scraper::{LinkExtractorType,TextExtractorType};
 use crate::utils::get_models;
 use super::message::Message;
 use super::SidebarMode;
@@ -32,7 +30,7 @@ macro_rules! button_nft {
     }
 }
 
-macro_rules! button_t {
+/*macro_rules! button_t {
     ($text:expr, $tp:expr, $msg:ident) => {
 
         tooltip(
@@ -42,43 +40,12 @@ macro_rules! button_t {
             )
     }
 
-}
+}*/
 
 macro_rules! text_nf {
     ($text:expr) => {
         text($text).font(Font::with_name("Symbols Nerd Font"))
     };
-}
-
-#[cfg(feature = "scraper")]
-pub fn link_extractor<'a>(app: &'a super::App) -> Row<'a, Message> {
-    let labels = app.conf.get_labels();
-    let padding = app.conf.window.padding;
-    let spacing = app.conf.window.spacing;
-
-    if let Some(te) = &app.conf.l_ex {
-    match te {
-            crate::scraper::LinkExtractorType::PatternExtractor { pattern, n_chapters, name } => {
-                row![
-                    column![ text("Type"), text("Pattern Link") ].width(150.0).padding(padding).spacing(spacing),
-                    column![ text(t!("e_pattern")), text_input("", pattern).on_input(Message::LP) ].padding(padding).spacing(spacing),
-                    column![ text(t!("e_chapters")), text_input("", n_chapters.to_string().as_str()).on_input(Message::LX) ].padding(padding).spacing(spacing),
-                    column![ text(t!("name")), text_input("", name).on_input(Message::LN) ].padding(padding).spacing(spacing)
-                ].padding(padding).spacing(spacing)
-            }
-            crate::scraper::LinkExtractorType::MainPageExtractor { url, pattern, name } => {
-                row![
-                    column![ text("Type"), text("Main Page Link") ].width(150.0).padding(padding).spacing(spacing),
-                    column![ text(t!("e_pattern")), text_input("", pattern).on_input(Message::LP) ].padding(padding).spacing(spacing),
-                    column![ text("URL"), text_input("", url).on_input(Message::LU) ].padding(padding).spacing(spacing),
-                    column![ text(t!("name")), text_input("", name).on_input(Message::LN) ].padding(padding).spacing(spacing)
-                ]
-            }
-        }
-    } else {
-        row![text("-")]
-    }
-
 }
 
 pub fn notes<'a>(app: &'a super::App) -> Column<'a,Message> {
@@ -117,32 +84,6 @@ pub fn notes<'a>(app: &'a super::App) -> Column<'a,Message> {
     }
 }
 
-#[cfg(feature = "scraper")]
-pub fn text_extractor<'a>(app: &'a super::App) -> Row<'a, Message> {
-    let labels = app.conf.get_labels();
-    let padding = app.conf.window.padding;
-    let spacing = app.conf.window.spacing;
-
-    if let Some(te) = &app.conf.t_ex {
-        match te {
-            crate::scraper::TextExtractorType::PatternTextExtractor { title_pattern, pattern, name } => {
-                let tp = title_pattern.clone().unwrap_or("title".to_string());
-                row![
-                    column![ text("Type"), text("Pattern Text") ].width(150.0).padding(padding).spacing(spacing),
-                    column![ text(t!("e_pattern")), text_input("", pattern.as_str()).on_input(Message::TP) ].padding(padding).spacing(spacing),
-                    column![ text(t!("name")), text_input("", name).on_input(Message::TN) ].padding(padding).spacing(spacing),
-                    column![ text(t!("e_tp")), text_input("", tp.as_str()).on_input(Message::TT) ].padding(padding).spacing(spacing),
-                ]
-            }
-            crate::scraper::TextExtractorType::CText => {
-                row![ text("CText") ]
-            }
-        }
-    } else {
-        row![text("-")]
-    }
-}
-
 pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
     let sm = app.sidebar_mode;
     let win = &app.conf.window;
@@ -175,37 +116,29 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
                 .on_action(Message::NotesAction)
                 .height(500.0);
             
-            column![id_mode, idc_notes, space::vertical(), idr_note].padding(win.padding_frame).align_x(iced::Alignment::Center)
+            column![id_mode, idc_notes, space::vertical(), idr_note].spacing(win.spacing).padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
         SidebarMode::AI => {
-            let idc_meaning = button_t!(t!("ai_meaning"), t!("p_meaning"), PromptMeaning);
-            let idc_explain = button_t!(t!("ai_explain"), t!("p_explain"), PromptExplain);
-            let idc_grammar = button(text(t!("ai_grammar")))
-                .on_press(Message::PromptGrammar);
-            let idc_examples = button(text(t!("ai_examples")))
-                .on_press(Message::PromptUsage);
-            let idc_translate = button_nf!("\u{f02bf}").on_press(Message::PromptTranslate);
-            let idr_prompts = row![idc_meaning, idc_explain, idc_grammar].spacing(win.spacing).padding(win.padding);
-
-            let idc_summary = button(text(t!("summary")))
-                .on_press(Message::PromptSummary);
-            let idr_prompts2 = row![idc_examples, idc_summary, idc_translate].spacing(win.spacing).padding(win.padding);
-
+            let idr_prompts = ai_prompter(app);
             let idc_answer = scrollable(markdown::view(app.answer_text.items(), app.theme())
-                .map(Message::LinkClicked)).height(560.0);
+                .map(Message::LinkClicked)).height(500.0);
             let idc_to_notes = button(text(t!("to_notes"))).on_press(Message::AnswerToNotes);
-            let idc_stop = button_nft!("\u{f073a}", t!("cancel"), AiStop);
             let idr_answer = row![idc_answer].padding(win.padding).spacing(win.spacing);
 
             let is_ollama = if let Some(c) = app.conf.get_ai_config() && c.provider == Provider::Ollama { Some(Message::AiOllamaKeepAlive) } else { None };
             let idc_ka = (if app.ollama_alive { button_nf!("\u{f205}") } else { button_nf!("\u{f204}") }).on_press_maybe(is_ollama);
-            column![id_mode, idr_prompts, idr_prompts2, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), 
-                row![idc_to_notes, idc_stop, idc_ka,
+            let idc_to_text = button_nf!("\u{ebcc}").on_press(Message::AiCurrentTextToEditor);
+            let can_toggle_llama = if "🟩⬜️".contains(&app.llama_state) { Some(Message::AiLlamaToggle) } else { None };
+            let idc_history_clear = button_nf!("\u{eabf}").on_press(Message::AiHistoryClear);
+            column![id_mode, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), idr_prompts,
+                row![idc_to_text, idc_to_notes, idc_ka,
                     if let Some(c) = app.conf.get_ai_config() && c.provider == Provider::LlamaCpp {
-                        column![button(text(&app.llama_state)).on_press(Message::AiLlamaToggle).width(40.0)]
+                        column![button(text(&app.llama_state)).on_press_maybe(can_toggle_llama).width(40.0)]
                     } else {
                         column![text("-")]
-                    }
+                    },
+                    button_nf!("\u{f073a}").on_press(Message::AiCancelPrompt),
+                    idc_history_clear,
                 ].spacing(win.spacing).padding(win.padding),
                 ].padding(win.padding_frame).align_x(iced::Alignment::Center)
         }
@@ -247,8 +180,6 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
     let idc_img_load = button_nft!("\u{f03e}", t!("load_img"), LoadImage);
     let idc_img_file = button_nft!("\u{f1c5}", t!("load_file"), LoadImageFile);
     let idc_img_clear = button_nft!("\u{f1418}", t!("clear_img"), ClearImage);
-    #[cfg(feature = "scraper")]
-    let idc_scraper = button_nft!("\u{f167e}", t!("scraper"), Scraper );
     let idc_ocr = button_nf!("\u{f113a}")
         .on_press_maybe(if is_img && ocr_enabled { Some(Message::Ocr) } else { None });
     let idc_notes = button_nft!("\u{f1a7d}", t!("to_notes"), Notes);
@@ -261,22 +192,6 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
     let idc_anki_db = button_nf!("\u{f1c0}").on_press_maybe(anki_acc);
     let idc_deepl = button_nf!("\u{f05ca}").on_press(Message::DeeplAsk);
     
-    #[cfg(feature = "scraper")]
-    let idr_left_top = row![
-        idc_settings,
-        idc_settings_ai, 
-        idc_load, 
-        idc_save, 
-        idc_img_load, 
-        idc_img_file, 
-        idc_img_clear, 
-        idc_scraper, 
-        idc_ocr,
-        idc_notes,
-        idc_anki_db,
-    ].padding(win.padding_frame).spacing(win.spacing);
-
-    #[cfg(not(feature = "scraper"))]
     let idr_left_top = row![
         idc_settings,
         idc_settings_ai, 
@@ -479,6 +394,23 @@ pub fn display_av<'a>(conf: &'a Window, msg: &'a str) -> Element<'a, Message> {
     alert.into()
 }
 
+pub fn ai_prompter<'a>(app: &'a super::App) -> Column<'a, Message> {
+    let win = &app.conf.window;
+    column![
+        row![text("prompt") ,pick_list(crate::gui::Prompt::ALL, app.prompt.as_ref(), Message::AiPromptSelected)].spacing(win.spacing).padding(win.padding),
+        if let Some(crate::gui::Prompt::Custom) = app.prompt {
+            container(row![
+                 text_editor(&app.custom_prompt).on_action(Message::AiCustomPromptChanged).width(400.0).height(100.0),
+            ].spacing(win.spacing).padding(win.padding) )
+        } else { container(row![].width(400.0).height(100.0)).style(container::bordered_box) },
+        row![
+            checkbox(app.text_ctx).label("text").on_toggle(Message::AiTextCtxToggle), checkbox(app.image_include).label("img").on_toggle_maybe(
+                if app.is_vision_ai_selected() { Some(Message::AiImageIncludeToggle) } else { None }), 
+            button_nf!("\u{f0eb4}").on_press_maybe(
+                    if app.prompt.is_some() { Some(Message::Prompt) } else { None }) ].spacing(win.spacing).padding(win.padding)
+    ].spacing(win.spacing).padding(win.padding)
+}
+
 pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
     let conf = &app.conf;
     let is_new = app.new_ai.is_some();
@@ -513,24 +445,28 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
                 column![
                     row![text("llama_type"), pick_list(LlamaType::ALL, c.llama_type.as_ref(), Message::AiLlamaTypeSelected)].spacing(2.0),
                     if let Some(ltype) = c.llama_type.as_ref()
-                        && let crate::config::LlamaType::Local { cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty } = ltype {
-                        column![
-                            row![
-                                text("ctx_size").width(settings_label_w),
-                                text_input("ctx_size", &ctx_size.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(120.0).on_input(Message::AiLlamaCtxSizeChanged)
-                            ].spacing(2.0).padding(2.0),
-                            row![text("cache_type_k").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_k.clone(), Message::AiCacheTypeKChanged)].spacing(2.0).padding(2.0),
-                            row![text("cache_type_v").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_v.clone(), Message::AiCacheTypeVChanged)].spacing(2.0).padding(2.0),
-                            row![text("flash_attn").width(settings_label_w), checkbox(flash_attn.unwrap_or(false)).on_toggle(Message::AiFlashAttnChanged) ].spacing(2.0).padding(2.0),
-                            row![text("n_cpu_moe").width(settings_label_w), text_input("", &n_cpu_moe.map(|c| c.to_string()).unwrap_or_default()).width(50.0).on_input(Message::AiNCpuMoeChanged) ].spacing(2.0).padding(2.0),
-                            row![
-                                text("reasoning_budget").width(settings_label_w),
-                                text_input("", &reasoning_budget.map(|c| c.to_string()).unwrap_or(String::from(""))).width(80.0).on_input(Message::AiReasoningBudgetChanged)
-                            ].spacing(5.0).padding(2.0),
-                            row![text("port").width(settings_label_w) ,text_input("port", &port.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(80.0).on_input(Message::AiPortChanged)].spacing(2.0).padding(2.0),
-                            row![text("presence_penalty").width(settings_label_w), text_input("", &presence_penalty.clone().unwrap_or_default()).width(80.0).on_input(Message::AiPresencePenaltyChanged) ].spacing(2.0).padding(2.0)
-                        ].spacing(2.0).padding(10.0)
-                    } else { column![] }
+                        && let crate::config::LlamaType::Local { cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty, mmproj } = ltype {
+                        container(
+                            column![
+                                row![
+                                    text("ctx_size").width(settings_label_w),
+                                    text_input("ctx_size", &ctx_size.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(120.0).on_input(Message::AiLlamaCtxSizeChanged)
+                                ].spacing(2.0).padding(2.0),
+                                row![text("cache_type_k").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_k.clone(), Message::AiCacheTypeKChanged)].spacing(2.0).padding(2.0),
+                                row![text("cache_type_v").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_v.clone(), Message::AiCacheTypeVChanged)].spacing(2.0).padding(2.0),
+                                row![text("flash_attn").width(settings_label_w), checkbox(flash_attn.unwrap_or(false)).on_toggle(Message::AiFlashAttnChanged) ]
+                                    .height(40.0).spacing(2.0).padding(2.0).align_y(iced::Alignment::Center),
+                                row![text("n_cpu_moe").width(settings_label_w), text_input("", &n_cpu_moe.map(|c| c.to_string()).unwrap_or_default()).width(50.0).on_input(Message::AiNCpuMoeChanged) ].spacing(2.0).padding(2.0),
+                                row![
+                                    text("reasoning_budget").width(settings_label_w),
+                                    text_input("", &reasoning_budget.map(|c| c.to_string()).unwrap_or(String::from(""))).width(80.0).on_input(Message::AiReasoningBudgetChanged)
+                                ].spacing(5.0).padding(2.0),
+                                row![text("port").width(settings_label_w) ,text_input("port", &port.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(80.0).on_input(Message::AiPortChanged)].spacing(2.0).padding(2.0),
+                                row![text("presence_penalty").width(settings_label_w), text_input("", &presence_penalty.clone().unwrap_or_default()).width(80.0).on_input(Message::AiPresencePenaltyChanged) ].spacing(2.0).padding(2.0),
+                                row![text("mmproj").width(settings_label_w), text_input("", &mmproj.clone().unwrap_or_default()), button_nf!("\u{f07c}").on_press(Message::AiLlamaMmprojPicked)  ].spacing(2.0).padding(2.0)
+                            ].spacing(2.0).padding(10.0)
+                        ).padding(20.0)
+                    } else { container(space()) }
                 ].padding(10.0)
             ].into()
         } else {
@@ -589,67 +525,6 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
         idr_b,
         if changed { text(t!("restart_needed")) } else { text("") }
         ].padding(conf.window.padding_frame).align_x(iced::Alignment::Center)
-        
-}
-
-#[cfg(feature = "scraper")]
-pub fn scrapper<'a>(app: &'a super::App) -> Column<'a, Message> {
-    let conf = &app.conf;
-    let win = &conf.window;
-    let labels  = conf.get_labels();
-
-    let ids_sleep = text(t!("sc_sleep")).width(win.settings_label_w);
-    let sc_sleep = match conf.scraper_sleep {
-        Some(sc) => format!("{}", sc),
-        None => String::new(),
-    };
-    let idc_sleep = text_input("", sc_sleep.as_str())
-        .width(100.0)
-        .on_input(Message::ScraperSleepChanged);
-    let idr_sleep = row![ids_sleep, idc_sleep, text("ms")].padding(conf.window.padding).spacing(conf.window.spacing);
-
-    let idc_start = button_nf!("\u{ead3}")
-        .on_press_maybe(if app.scraper_file.is_empty() { None } else { Some(Message::StartScraper) });
-    let idc_save = button_nf!("\u{eb4b}")
-        .on_press(Message::SettingsSave);
-    let idc_stop = button_nf!("\u{f04d}").on_press(Message::StopScraper);
-    let idc_close = button_nf!("\u{ea76}").on_press_maybe(
-        if app.scraper_progress == 0.0 { Some(Message::Close) } else { None });
-    let idc_new = button_nf!("\u{f0394}").on_press_maybe(if app.sc_new { None } else { Some(Message::ScNew) });
-    let idr_buttons = row![
-        idc_start, 
-        idc_save, 
-        idc_stop, 
-        idc_close, 
-        idc_new
-    ].padding(conf.window.padding).spacing(conf.window.spacing);
-
-    let l_list = if app.sc_new {
-        LinkExtractorType::ALL
-    } else {
-        app.conf.link_ex.as_slice()
-    };
-
-    let t_list = if app.sc_new {
-        TextExtractorType::ALL
-    } else {
-        app.conf.text_ex.as_slice()
-    };
-    
-    column![
-        text(t!("sc_warn")),
-        idr_sleep,
-        row![ text_input(t!("name"), app.scraper_file.as_str()).on_input(Message::ScraperFileChanged) ],
-        row![ 
-            text(t!("e_lt")), 
-            pick_list(l_list, app.conf.l_ex.as_ref(), Message::LinkExtractorChanged).width(500.0),
-            pick_list(t_list, app.conf.t_ex.as_ref(), Message::TextExtractorChanged).width(500.0),
-        ].padding(conf.window.padding).spacing(conf.window.spacing),
-        link_extractor(app),
-        text_extractor(app),
-        progress_bar(0.0..=app.scraper_to, app.scraper_progress),
-        idr_buttons,
-     ].padding(conf.window.padding_frame).spacing(win.spacing).align_x(iced::Alignment::Center)
 }
 
 pub fn anki_stats<'a>(app: &'a super::App) -> Column<'a, Message> {
