@@ -49,12 +49,12 @@ If you use local AI models with llama.cpp, you can manage configurations and sta
 <img width="1479" height="757" alt="image" src="https://github.com/user-attachments/assets/868fc151-da7f-4cae-bf0c-995744d7881f" />
 Just show the paths to model and mmproj (if you want vision) and then use the button with coloured square:
 <img width="360" height="63" alt="image" src="https://github.com/user-attachments/assets/9d085dfa-48ee-4f72-8efc-e0d376b13542" />
-⬜️ - local llama.cpp found, not running
-🟩 - running, ready
-🟥 - starting, not ready, not responding
-🟦 - running, ready, but not started from this app
-🟪 - streaming response
-⬛️ - not available
+- ⬜️ - local llama.cpp found, not running
+- 🟩 - running, ready
+- 🟥 - starting, not ready, not responding
+- 🟦 - running, ready, but not started from this app
+- 🟪 - streaming response
+- ⬛️ - not available
 For Ollama users to the left of it there is a "toggle keep alive" button so it does not unload a model while reading.
 
 ## Improved prompter
