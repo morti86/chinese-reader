@@ -45,3 +45,22 @@ Here you can:
 - add a new text (it will ask you to provide the name), saving the contents that are in the main window
 - cancel
 
+If you use local AI models with llama.cpp, you can manage configurations and start/stop llama-server from this app now.
+<img width="1479" height="757" alt="image" src="https://github.com/user-attachments/assets/868fc151-da7f-4cae-bf0c-995744d7881f" />
+Just show the paths to model and mmproj (if you want vision) and then use the button with coloured square:
+<img width="360" height="63" alt="image" src="https://github.com/user-attachments/assets/9d085dfa-48ee-4f72-8efc-e0d376b13542" />
+⬜️ - local llama.cpp found, not running
+🟩 - running, ready
+🟥 - starting, not ready, not responding
+🟦 - running, ready, but not started from this app
+🟪 - streaming response
+⬛️ - not available
+For Ollama users to the left of it there is a "toggle keep alive" button so it does not unload a model while reading.
+
+## Improved prompter
+<img width="453" height="207" alt="image" src="https://github.com/user-attachments/assets/e606b71d-6115-43bb-ac62-4ba410d3c354" />
+Improved prompter lets you choose whether to include the text and/or a loaded image with your prompt.
+
+## Deepl
+<img width="575" height="42" alt="image" src="https://github.com/user-attachments/assets/28495504-962b-4646-98f6-65338f30d628" />
+Here you choose the language and set up your API key.
