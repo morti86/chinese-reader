@@ -69,6 +69,9 @@ The other buttons (left to right)
 <img width="453" height="207" alt="image" src="https://github.com/user-attachments/assets/e606b71d-6115-43bb-ac62-4ba410d3c354" />
 Improved prompter lets you choose whether to include the text and/or a loaded image with your prompt.
 
+If you write empty brackets `{}` in the chat, it will replace them with the selected fragment of text, e.g.
+_Explain the meaning of the following fragment: {}_
+
 ## Deepl
 <img width="575" height="42" alt="image" src="https://github.com/user-attachments/assets/28495504-962b-4646-98f6-65338f30d628" />
 Here you choose the language and set up your API key.
