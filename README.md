@@ -70,6 +70,7 @@ The other buttons (left to right)
 Improved prompter lets you choose whether to include the text and/or a loaded image with your prompt.
 
 If you write empty brackets `{}` in the chat, it will replace them with the selected fragment of text, e.g.
+
 _Explain the meaning of the following fragment: {}_
 
 ## Deepl
