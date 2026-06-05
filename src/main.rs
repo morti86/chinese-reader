@@ -34,16 +34,13 @@ static AGENT_NEW: OnceCell<std::sync::Arc<tokio::sync::RwLock<crate::ai::manager
 const FONT: &[u8] = include_bytes!("../SymbolsNerdFont-Regular.ttf");
 
 pub fn run(theme: &str) -> Result<(), iced::Error> {
+    debug!("Run with theme {}", theme);
     for e in iced::Theme::ALL {
-
-        debug!("Run with theme {}", theme);
-    
         if theme.to_string() == e.to_string() {
             return iced::application(gui::App::new, gui::App::update, gui::App::view)
                 .theme(gui::App::theme)
                 .window_size(iced::Size::new(1500.0,850.0))
                 .subscription(gui::App::subscription)
-                .exit_on_close_request(false)
                 .font(FONT)
                 .run();
         }
@@ -51,7 +48,6 @@ pub fn run(theme: &str) -> Result<(), iced::Error> {
     iced::application(gui::App::default, gui::App::update, gui::App::view)
         .subscription(gui::App::subscription)
         .window_size(iced::Size::new(1500.0,850.0))
-        .exit_on_close_request(false)
         .font(FONT)
         .run()
 }

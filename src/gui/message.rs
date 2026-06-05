@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use iced::widget::{markdown::Uri, text_editor};
 
-use crate::{ai::ChatEvent, config::LlamaType};
+use crate::ai::ChatEvent;
 
 #[derive(Clone,Debug)]
 pub enum FileToDl {
@@ -59,20 +59,8 @@ pub enum Message {
     AiOllamaKeepAlive,
     AiOllamaKeepAliveRes(bool),
     AiOllamaKeepAliveModal{ msg: String, ka: bool },
-    AiLlamaTypeSelected(LlamaType),
-    AiLlamaModelPathPick,
-    AiLlamaCtxSizeChanged(String),
-    AiCacheTypeKChanged(crate::config::CacheType),
-    AiCacheTypeVChanged(crate::config::CacheType),
-    AiFlashAttnChanged(bool),
-    AiNCpuMoeChanged(String),
-    AiReasoningBudgetChanged(String),
-    AiPortChanged(String),
-    AiLlamaEvent(crate::ai::llama::LlamaEvent),
-    AiLlamaToggle,
-    AiPresencePenaltyChanged(String),
-    AiLlamaMmprojPicked,
     AiCancelPrompt,
+    AiDelete,
 
     AiPromptSelected(crate::gui::Prompt),
     AiCustomPromptChanged(text_editor::Action),
@@ -87,8 +75,6 @@ pub enum Message {
     ThemeSelected(iced::Theme),
 
     Void,
-    Exit,
-    BeforeExit,
 
     AnswerCopy,
     AnswerToNotes,

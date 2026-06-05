@@ -3,9 +3,7 @@
 use serde::{Serialize, Deserialize};
 use tracing::debug;
 use std::{collections::BTreeMap, path::PathBuf};
-use std::fmt::{self, Display};
-use crate::make_enum;
-
+use std::fmt;
 use crate::utils::{Level, random_name, url_for_provider};
 use std::path::Path;
 
@@ -14,8 +12,6 @@ pub struct Keys {
     pub elevenlabs: String,
     pub deepl: String,
 }
-
-//crate::make_enum!(Language, [English, Polski, Deutsch, Русский, Française, Italiano, Español, Türkçe, 日本語]);
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Window {
@@ -73,89 +69,6 @@ impl Provider {
     }
 }
 
-make_enum!(CacheType, [f32, f16, bf16, q8_0, q4_0, q4_1, iq4_nl, q5_0, q5_1]);
-
-/// llama.cpp type: local managed by reader, remote or no llama
-#[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
-pub enum LlamaType {
-    Local { 
-        cache_type_k: Option<CacheType>, 
-        cache_type_v: Option<CacheType>, 
-        flash_attn: Option<bool>, 
-        ctx_size: Option<u32>, 
-        n_cpu_moe: Option<u16>, 
-        reasoning_budget: Option<u32>, 
-        port: Option<u16>, 
-        presence_penalty: Option<String>,
-        mmproj: Option<String>,
-    },
-    Remote,
-    #[default]
-    None,
-}
-
-impl Display for LlamaType {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            LlamaType::Local { .. } => write!(f, "Local"),
-            LlamaType::Remote => write!(f, "Remote"),
-            LlamaType::None => write!(f, "None"),
-        }
-    }
-}
-
-impl LlamaType {
-    pub const ALL: [LlamaType; 3] = [
-        LlamaType::Local { 
-            cache_type_k: None, 
-            cache_type_v: None, 
-            flash_attn: None, 
-            ctx_size: Some(8192),
-            n_cpu_moe: None, 
-            reasoning_budget: None, 
-            port: Some(8080), 
-            presence_penalty: None,
-            mmproj: None,
-        },
-        LlamaType::Remote,
-        LlamaType::None,
-    ];
-
-    pub fn is_local(&self) -> bool {
-        match self {
-            LlamaType::Local { .. } => true,
-            _ => false,
-        }
-    }
-
-    pub fn is_vision(&self) -> bool {
-        match self {
-            LlamaType::Local { mmproj, .. } => mmproj.is_some(),
-            _ => false,
-        }
-    }
-}
-
-impl From<String> for LlamaType {
-    fn from(value: String) -> Self {
-        match value.to_lowercase().as_str() {
-            "local" => LlamaType::Local { 
-                cache_type_k: None, 
-                cache_type_v: None, 
-                flash_attn: None, 
-                ctx_size: Some(8192), 
-                n_cpu_moe: None, 
-                reasoning_budget: None, 
-                port: Some(8080), 
-                presence_penalty: None,
-                mmproj: None,
-            },
-            "remote" => LlamaType::Remote,
-            _ => LlamaType::None,
-        }
-    }
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, Default, PartialEq)]
 pub struct AiChatConfig {
     pub name: String,
@@ -164,22 +77,11 @@ pub struct AiChatConfig {
     pub model: String,
     pub provider: Provider,
     pub temperature: Option<f64>,
-    pub llama_type: Option<LlamaType>,
 }
 
 impl fmt::Display for AiChatConfig {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,"{}",self.name)
-    }
-}
-
-impl AiChatConfig {
-    pub fn is_llama_local(&self) -> bool {
-        self.llama_type.as_ref().is_some_and(|t| t.is_local())
-    }
-
-    pub fn is_local_llama_vision(&self) -> bool {
-        self.llama_type.as_ref().is_some_and(|x| x.is_vision())
     }
 }
 
@@ -259,6 +161,11 @@ impl Config {
         self.ai_chats.get(self.ai_chat.as_str())
     }
 
+    pub fn delete_current_model(&mut self) {
+        self.ai_chats.remove(&self.ai_chat);
+        self.ai_chat = String::new();
+    }
+
     pub fn get_ai_config_mut(&mut self) -> Option<&mut AiChatConfig> {
         self.ai_chats.get_mut(self.ai_chat.as_str())
     }
@@ -301,11 +208,6 @@ impl Config {
 
     pub fn ocr_models_found(&self) -> bool {
         Path::new(&format!("{}", self.ocr_models)).exists()
-    }
-
-    pub fn is_local_llama(&self) -> bool {
-        self.get_ai_config()
-            .is_some_and(|c| c.provider == Provider::LlamaCpp && c.llama_type.as_ref().is_some_and(|d| d.is_local()))
     }
 
     pub fn is_new(&self) -> bool {

@@ -85,3 +85,5 @@ prompt_grammar: 解释句子{}的语法结构
 prompt_summary: 总结附加文本
 prompt_translate: 翻译{}到中文
 ai_translate: 翻译
+append: 追加
+replace: 替换

@@ -89,3 +89,5 @@ prompt_grammar: 문장 {}의 문법 구조를 설명해 주세요
 prompt_summary: 첨부된 텍스트를 요약해 주세요
 prompt_translate: '{}를 한국어로 번역하세요'
 ai_translate: 번역 
+append: 추가
+replace: 바꾸기

@@ -5,7 +5,7 @@ use tracing::{debug, info, warn};
 use crate::AGENT_NEW;
 pub mod manager;
 pub mod ollama;
-pub mod llama;
+//pub mod llama;
 pub mod deepl;
 
 #[derive(Clone)]

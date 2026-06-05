@@ -89,3 +89,5 @@ prompt_grammar: Spiega la struttura grammaticale della frase {}
 prompt_summary: Riassumi il testo allegato
 prompt_translate: Traduci {} in italiano
 ai_translate: Traduci
+append: aggiungi
+replace: sostituisci

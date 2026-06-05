@@ -89,3 +89,5 @@ prompt_grammar: اشرح البنية النحوية للجملة {}
 prompt_summary: لخص النص المرفق
 prompt_translate: ترجمة {} إلى العربية
 ai_translate: ترجمة 
+append: إضافة
+replace: استبدال

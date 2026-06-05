@@ -89,3 +89,5 @@ prompt_grammar: Explain the grammatical structure of the sentence {}
 prompt_summary: Summarize the attached text
 prompt_translate: Translate {} to English
 ai_translate: Translate
+append: append
+replace: replace

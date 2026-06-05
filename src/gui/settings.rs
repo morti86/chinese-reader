@@ -2,7 +2,7 @@ use iced::advanced::text::highlighter::PlainText;
 use iced::widget::{Column, Row, TextEditor, button, checkbox, column, container, markdown, pick_list, progress_bar, row, scrollable, slider, space, table, text, text_editor, text_input, tooltip};
 use iced::{Alignment, Element, Font, Padding, Renderer, Theme};
 use crate::cedict::HSK_TOTAL;
-use crate::config::{LlamaType, Provider, Window};
+use crate::config::{Provider, Window};
 use crate::utils::get_models;
 use super::message::Message;
 use super::SidebarMode;
@@ -128,15 +128,9 @@ pub fn sidebar<'a>(app: &'a super::App) -> Column<'a, Message, Theme> {
             let is_ollama = if let Some(c) = app.conf.get_ai_config() && c.provider == Provider::Ollama { Some(Message::AiOllamaKeepAlive) } else { None };
             let idc_ka = (if app.ollama_alive { button_nf!("\u{f205}") } else { button_nf!("\u{f204}") }).on_press_maybe(is_ollama);
             let idc_to_text = button_nf!("\u{ebcc}").on_press(Message::AiCurrentTextToEditor);
-            let can_toggle_llama = if "🟩⬜️".contains(&app.llama_state) { Some(Message::AiLlamaToggle) } else { None };
             let idc_history_clear = button_nf!("\u{eabf}").on_press(Message::AiHistoryClear);
             column![id_mode, space::vertical(), idr_answer.padding(Padding::new(0.0).right(5.0)), idr_prompts,
                 row![idc_to_text, idc_to_notes, idc_ka,
-                    if let Some(c) = app.conf.get_ai_config() && c.provider == Provider::LlamaCpp {
-                        column![button(text(&app.llama_state)).on_press_maybe(can_toggle_llama).width(40.0)]
-                    } else {
-                        column![text("-")]
-                    },
                     button_nf!("\u{f073a}").on_press(Message::AiCancelPrompt),
                     idc_history_clear,
                 ].spacing(win.spacing).padding(win.padding),
@@ -204,9 +198,10 @@ pub fn default<'a>(app: &'a super::App) -> Row<'a, Message> {
         idc_notes,
         idc_anki_db,
     ].padding(win.padding_frame).spacing(win.spacing);
+    let title = format!("{} | {},{}", app.loaded_text.title, app.loaded_text.line, app.loaded_text.character);
 
     let idc_title = row![
-        text(app.loaded_text.title()).align_y(iced::Alignment::Center).shaping(text::Shaping::Advanced),
+        text(title).align_y(iced::Alignment::Center).shaping(text::Shaping::Advanced),
         space::horizontal(),
         
         button_nf!("\u{f09a8}").on_press(Message::TextMode(crate::gui::TextMode::Raw)),
@@ -404,8 +399,7 @@ pub fn ai_prompter<'a>(app: &'a super::App) -> Column<'a, Message> {
             ].spacing(win.spacing).padding(win.padding) )
         } else { container(row![].width(400.0).height(100.0)).style(container::bordered_box) },
         row![
-            checkbox(app.text_ctx).label("text").on_toggle(Message::AiTextCtxToggle), checkbox(app.image_include).label("img").on_toggle_maybe(
-                if app.is_vision_ai_selected() { Some(Message::AiImageIncludeToggle) } else { None }), 
+            checkbox(app.text_ctx).label("text").on_toggle(Message::AiTextCtxToggle), checkbox(app.image_include).label("img").on_toggle(Message::AiImageIncludeToggle), 
             button_nf!("\u{f0eb4}").on_press_maybe(
                     if app.prompt.is_some() { Some(Message::Prompt) } else { None }) ].spacing(win.spacing).padding(win.padding)
     ].spacing(win.spacing).padding(win.padding)
@@ -428,8 +422,7 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
     let idc_model: Element<'a, Message> = 
         if let Some(c) = app.get_ai_config() {
             if get_models(&c.provider).is_empty() {
-                text_input(&t!("enter_model"), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input_maybe(
-                    if c.provider.is_llama() { None } else { Some(Message::AiModelChange) }).into() 
+                text_input(&t!("enter_model"), ai_chat.map(|x| x.model.clone()).unwrap_or_default().as_str()).on_input(Message::AiModelChange) .into() 
             } else {
                 pick_list(get_models(&c.provider), ai_chat.map(|x| x.model.clone()), Message::AiModelChange).into() 
             }
@@ -437,42 +430,6 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
             text("<< NO MODELS >>").into()
     };
     
-    let idc_llama_cpp: Element<'a, Message> =
-        if let Some(c) = ai_chat
-            && c.provider == Provider::LlamaCpp {
-            row![
-                column![space()].width(settings_label_w),
-                column![
-                    row![text("llama_type"), pick_list(LlamaType::ALL, c.llama_type.as_ref(), Message::AiLlamaTypeSelected)].spacing(2.0),
-                    if let Some(ltype) = c.llama_type.as_ref()
-                        && let crate::config::LlamaType::Local { cache_type_k, cache_type_v, flash_attn, ctx_size, n_cpu_moe, reasoning_budget, port, presence_penalty, mmproj } = ltype {
-                        container(
-                            column![
-                                row![
-                                    text("ctx_size").width(settings_label_w),
-                                    text_input("ctx_size", &ctx_size.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(120.0).on_input(Message::AiLlamaCtxSizeChanged)
-                                ].spacing(2.0).padding(2.0),
-                                row![text("cache_type_k").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_k.clone(), Message::AiCacheTypeKChanged)].spacing(2.0).padding(2.0),
-                                row![text("cache_type_v").width(settings_label_w), pick_list(crate::config::CacheType::ALL, cache_type_v.clone(), Message::AiCacheTypeVChanged)].spacing(2.0).padding(2.0),
-                                row![text("flash_attn").width(settings_label_w), checkbox(flash_attn.unwrap_or(false)).on_toggle(Message::AiFlashAttnChanged) ]
-                                    .height(40.0).spacing(2.0).padding(2.0).align_y(iced::Alignment::Center),
-                                row![text("n_cpu_moe").width(settings_label_w), text_input("", &n_cpu_moe.map(|c| c.to_string()).unwrap_or_default()).width(50.0).on_input(Message::AiNCpuMoeChanged) ].spacing(2.0).padding(2.0),
-                                row![
-                                    text("reasoning_budget").width(settings_label_w),
-                                    text_input("", &reasoning_budget.map(|c| c.to_string()).unwrap_or(String::from(""))).width(80.0).on_input(Message::AiReasoningBudgetChanged)
-                                ].spacing(5.0).padding(2.0),
-                                row![text("port").width(settings_label_w) ,text_input("port", &port.map(|c| c.to_string()).unwrap_or(String::from("8192"))).width(80.0).on_input(Message::AiPortChanged)].spacing(2.0).padding(2.0),
-                                row![text("presence_penalty").width(settings_label_w), text_input("", &presence_penalty.clone().unwrap_or_default()).width(80.0).on_input(Message::AiPresencePenaltyChanged) ].spacing(2.0).padding(2.0),
-                                row![text("mmproj").width(settings_label_w), text_input("", &mmproj.clone().unwrap_or_default()), button_nf!("\u{f07c}").on_press(Message::AiLlamaMmprojPicked)  ].spacing(2.0).padding(2.0)
-                            ].spacing(2.0).padding(10.0)
-                        ).padding(20.0)
-                    } else { container(space()) }
-                ].padding(10.0)
-            ].into()
-        } else {
-            text("").into()
-        };
-
     let provider = ai_chat.map(|e| e.provider).unwrap_or_default();
     let ai_name = ai_chat.map(|e| e.name.clone()).unwrap_or_default();
     let ai_url = ai_chat.map(|e| e.url.clone().unwrap_or_default() ).unwrap_or_default();
@@ -491,7 +448,6 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
             ],
             row![   text(t!("model")).width(settings_label_w),
                     idc_model,
-                    button_nf!("\u{f07c}").on_press_maybe(if provider == Provider::LlamaCpp { Some(Message::AiLlamaModelPathPick) } else { None })
             ],
             row![
                     text(t!("ai_key")).width(settings_label_w),
@@ -501,7 +457,6 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
             row![   text(t!("provider")).width(settings_label_w),
                     pick_list(Provider::ALL, Some(provider), Message::AiProviderChange) 
             ],
-            idc_llama_cpp,
             //row![
             //        text("temp").width(settings_label_w),
             //        idc_temp
@@ -515,7 +470,8 @@ pub fn ai_settings<'a>(app: &'a super::App) -> Column<'a, Message> {
     let idc_new = button(text(t!("new"))).on_press_maybe(if is_new { None } else { Some(Message::NewAi) });
     let idc_close = button(text(t!("cancel"))).on_press(Message::Close);
     let idc_save = button(text(t!("save"))).on_press(Message::AiSettingsSave);
-    let idr_b = row![ idc_new, idc_close, idc_save ].padding(conf.window.padding).spacing(conf.window.spacing);
+    let idc_delete = button_nf!("\u{f01b4}").on_press(Message::AiDelete);
+    let idr_b = row![ idc_new, idc_close, idc_save, idc_delete ].padding(conf.window.padding).spacing(conf.window.spacing);
     column![
         idr_ai_select,
         row![iced::widget::rule::horizontal(2.0)].height(8.0),

@@ -89,3 +89,5 @@ prompt_grammar: Объясните грамматическую структур
 prompt_summary: Обобщите прикрепленный текст
 prompt_translate: Перевести {} на русский язык
 ai_translate: Перевести
+append: добавить
+replace: заменить

@@ -1,7 +1,6 @@
 mod settings;
 pub mod message;
 
-use crate::ai::llama::{LlamaCommand, LlamaEvent};
 use crate::ai::{CancellationToken, ChatCommand, ChatEvent};
 use crate::cedict::Cedict;
 use crate::error::ReaderError;
@@ -12,7 +11,7 @@ use iced::widget::text_editor::{Content, Position};
 use iced::{clipboard, Element, Subscription, Theme};
 use iced::widget::{text_editor,markdown};
 use rig::completion::Message as Rmsg;
-use rig::message::{Document, DocumentMediaType, Image, ImageMediaType, UserContent, MimeType};
+use rig::message::{AssistantContent, Document, DocumentMediaType, Image, ImageMediaType, MimeType, UserContent};
 use rig::OneOrMany;
 use rusqlite::Connection;
 use tokio::sync::RwLock;
@@ -84,6 +83,40 @@ macro_rules! paste {
     ($editor:expr, $value:expr) => {
         $editor.perform(text_editor::Action::Edit( text_editor::Edit::Paste( Arc::new($value) ) ));
     };
+    ($editor:expr, $value:expr, $append:expr) => {
+        if $append {
+            $editor.perform(text_editor::Action::Edit( text_editor::Edit::Paste( Arc::new($value) ) ));
+        } else {
+            $editor = text_editor::Content::new();
+        }
+    };
+
+}
+
+fn ac_to_str(ac: &AssistantContent) -> String {
+    match ac {
+        AssistantContent::Text(text) => text.text.clone(),
+        AssistantContent::Image(_img) => {
+            info!("AC Image!");
+            String::new()
+        }
+        AssistantContent::ToolCall(tc) => format!("\n{}", tc.id),
+        AssistantContent::Reasoning(_) => String::new(),
+    }
+}
+
+fn message_to_str(msg: &Rmsg) -> String {
+    match msg {
+        Rmsg::User { .. } => {
+            warn!("Linked user content");
+            String::from("<user message>")
+        },
+        Rmsg::System { content } => format!("system: {}\n", content),
+        Rmsg::Assistant { content, .. } => {
+            content.iter().fold(String::new(), 
+                |acc,e| format!("{}\n{}", acc, ac_to_str(e)))
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -113,6 +146,7 @@ pub struct App {
     sidebar_notes: text_editor::Content,
     answer_text: markdown::Content,
     answer_raw: String,
+    answer_t: String,
     result_text: markdown::Content,
     result_raw: String,
     text: text_editor::Content,
@@ -129,7 +163,6 @@ pub struct App {
     sender: Option<Sender<ChatCommand>>,
     dl_sender: Option<Sender<DlCommand>>,
     cts: Option<Sender<CancellationToken>>,
-    l_sender: Option<Sender<LlamaCommand>>,
 
     temp_document: Option<Document>,
     documents: Vec<Doc>,
@@ -157,6 +190,8 @@ pub struct App {
     custom_prompt: text_editor::Content,
     text_ctx: bool,
     image_include: bool,
+
+    last_save: (i64,i64),
 }
 
 impl Default for App {
@@ -287,6 +322,7 @@ impl App {
             sidebar_notes: text_editor::Content::new(),
             answer_text: markdown::Content::new(),
             answer_raw: String::new(),
+            answer_t: String::new(),
             result_text: markdown::Content::new(),
             result_raw: String::new(),
             text: text_editor::Content::new(),
@@ -299,7 +335,6 @@ impl App {
             chat_history: vec![],
             ai_changed: false,
             dl_sender: None,
-            l_sender: None,
             sender: None,
             cts: None,
 
@@ -330,18 +365,13 @@ impl App {
             custom_prompt: text_editor::Content::new(),
             text_ctx: false,
             image_include: false,
+
+            last_save: (0,0),
         }
     }
 
     pub fn theme(&self) -> Theme {
         self.conf.window.theme()
-    }
-
-    pub fn is_vision_ai_selected(&self) -> bool {
-        self.get_ai_config()
-            .is_some_and(|ai| 
-                !ai.is_llama_local() 
-                || ai.is_local_llama_vision() )
     }
 
     fn get_ai_config_mut(&mut self) -> Option<&mut AiChatConfig> {
@@ -368,10 +398,8 @@ impl App {
     pub fn subscription(&self) -> Subscription<Message> {
 
         let ai_chat_sub = Subscription::run(ai::connect).map(Message::AiChatEvent);
-        let ai_llama_sub = Subscription::run(ai::llama::connect).map(Message::AiLlamaEvent);
-        let s_close = iced::window::close_requests().map(|_| Message::BeforeExit);
         let dl_sub = Subscription::run(ocr::dl::connect).map(Message::DlEvent);
-        let subs = vec![ai_chat_sub, dl_sub, ai_llama_sub, s_close];
+        let subs = vec![ai_chat_sub, dl_sub];
         Subscription::batch(subs)
     }
 
@@ -411,18 +439,6 @@ impl App {
 
     pub fn update(&mut self, message: Message) -> iced::Task<Message> {
         match message {
-            Message::BeforeExit => {
-                if self.llama_state == String::from("🟩")
-                    && let Some(sender) = self.l_sender.clone() {
-                    return sender_send!(sender, LlamaCommand::Stop, Message::Exit);
-                } else {
-                    return iced::exit();
-                }
-            }
-            Message::Exit => {
-                debug!("Exit");
-                return iced::exit();
-            }
             Message::Close => {
                 self.state = AppState::Default;
                 self.new_ai = None;
@@ -687,6 +703,12 @@ impl App {
                 self.conf.ai_role = r;
                 self.ai_changed = true;
             }
+            Message::AiDelete => {
+                if let Some(_c) = self.get_ai_config() {
+                    self.conf.delete_current_model();
+                    self.ai_changed = true;
+                }
+            }
             Message::AiSettingsSave => {
                 if let Some(new_chat) = self.new_ai.as_ref() {
                     let new_key = crate::utils::random_name();
@@ -761,7 +783,6 @@ impl App {
                     model: String::new(),
                     temperature: None,
                     provider,
-                    llama_type: None, 
                 });
 
             }
@@ -795,18 +816,21 @@ impl App {
                         debug!("Received text: {:?}", text);
                         self.answer_text.push_str(text.as_str());
                         self.answer_raw.push_str(text.as_str());
-                        self.llama_state = String::from("🟪");
+                        self.answer_t.push_str(text.as_str());
                     }
                     ChatEvent::Final => {
                         debug!("Received final message from stream");
-                        self.answer_text.push_str("\n");
+                        let answer_ix = self.chat_history.len();
+                        let answer_footer = format!("\n[{}](B:{answer_ix}) [{}](C:{answer_ix})\n", t!("append"), t!("replace"));
+                        self.answer_text.push_str(&answer_footer);
                         self.answer_raw.push_str("\n");
-                        self.llama_state = String::from("⬛️");
+
                         self.chat_history.push(Rmsg::Assistant 
                             { 
                                 id: Some(String::from("**agent**")),
-                                content: OneOrMany::one(rig::message::AssistantContent::Text(rig::agent::Text::from(self.answer_raw.clone()))) 
+                                content: OneOrMany::one(rig::message::AssistantContent::Text(rig::agent::Text::from(self.answer_t.clone()))) 
                             });
+                        self.answer_t.clear();
                     }
                     ChatEvent::ToolCall { id, function, args } => {
                         debug!("ToolCall: {}/{}: {}", id, function, args);
@@ -816,12 +840,12 @@ impl App {
                     }
                     ChatEvent::ReasoningDelta(d) => { 
                         debug!("Reasoning delta: {}", d);
-                        self.llama_state = String::from("🟪");
                     }
                     ChatEvent::ToolCallDelta(tc) => {
                         debug!("ToolCallDelta: {:?}", tc);
                     }
                     ChatEvent::ChatError(error) => {
+                        self.answer_t.clear();
                         return iced::Task::done(Message::ShowModal(error));
                     }
                 }
@@ -904,6 +928,9 @@ impl App {
                 let line = c.line as i64;
                 let character = c.column as i64;
 
+                self.loaded_text.line = line;
+                self.loaded_text.character = character;
+
                 if let Err(e) = update_progress(&mut self.doc_conn, self.loaded_text.id as i64, character, line) {
                     error!("Error updating progress {}", e);
                     return iced::Task::done(Message::ShowModal(e.to_string()));
@@ -953,6 +980,8 @@ impl App {
                         Ok(Some(cc)) => {
                             self.text = text_editor::Content::with_text(cc.as_str());
                             self.state = AppState::Default;
+                            self.loaded_text.line = document.line;
+                            self.loaded_text.character = document.character;
                             match get_notes(&self.doc_conn, document.id) {
                                 Ok(notes) => {
                                     self.notes = notes;
@@ -1073,7 +1102,7 @@ impl App {
                     let q = &e[2..];
                     if let Some(sep_ix) = q.find(":") {
                         let line = &e[..sep_ix];
-                        let column = &e[..sep_ix];
+                        let column = &e[sep_ix..];
                         debug!("clicked note link: {}:{}",line,column);
                         if let Ok(line) = line.parse::<usize>()
                             && let Ok(column) = column.parse::<usize>() {
@@ -1086,6 +1115,15 @@ impl App {
                             }
                         }
                     }
+                } else if e.starts_with("B:") || e.starts_with("C:") {
+                    let append = e.chars().nth(0).unwrap() == 'B'; // Append, not replace
+                    let msg_index = &e[2..];
+                    if let Ok(msg_index) = msg_index.parse::<usize>() 
+                        && let Some(msg) = self.chat_history.iter().nth(msg_index) {
+                        paste!(self.text, message_to_str(msg), append);
+                    }
+                    
+                    debug!("Copy chat clicked");
                 } else {
                     #[cfg(target_os = "linux")]
                     if let Err(e) = std::process::Command::new("xdg-open").arg(e.to_string()).output() {
@@ -1205,228 +1243,11 @@ impl App {
                 self.ollama_alive = ka;
                 self.state = AppState::Modal(msg);
             }
-            Message::AiLlamaModelPathPick => {
-                let file_name = rfd::FileDialog::new()
-                    .add_filter("model", &["gguf", "safetensors"])
-                    .pick_file();
-                if let Some(c) = self.get_ai_config_mut()
-                    && let Some(file_name) = file_name {
-                    c.model = file_name.to_string_lossy().into();
-                }
-                return self.llama_command();
-            }
-            Message::AiLlamaMmprojPicked => {
-                let file_name = rfd::FileDialog::new()
-                    .add_filter("model", &["gguf", "safetensors"])
-                    .pick_file();
-                if let Some(c) = self.get_ai_config_mut()
-                    && let Some(crate::config::LlamaType::Local { mmproj, .. })  = c.llama_type.as_mut() {
-                    *mmproj = file_name.map(|x| format!("{}", x.to_string_lossy()));
-                }
-                return self.llama_command();
-            }
-            Message::AiLlamaTypeSelected(ly) => {
-                if let Some(c) = self.get_ai_config_mut() {
-                    c.llama_type = Some(ly.clone());
-                    let ltype = ly;
-                    let url = c.url.clone().unwrap_or_default();
-                    let model_path = c.model.clone();
-                    let command: LlamaCommand = ltype.into();
-                    let command = command.url(&url).model_path(&model_path);
-                    if let Some(sender) = self.l_sender.as_ref() {
-                        let sender = sender.clone();
-                        return sender_send!(sender, command, Message::Void);
-                    }
-                }
-            }
-            Message::AiLlamaCtxSizeChanged(ctx) => {
-                if let Ok(r) = ctx.parse::<u32>() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { 
-                            ctx_size, 
-                            ..}) = c.llama_type.as_mut() {
-                        *ctx_size = Some(r);
-                        return self.llama_command();
-                    }
-                }
-            }
-            Message::AiCacheTypeKChanged(ct) => {
-                if let Some(c) = self.get_ai_config_mut() 
-                    && c.provider == crate::config::Provider::LlamaCpp
-                    && let Some(crate::config::LlamaType::Local { cache_type_k, .. }) = c.llama_type.as_mut() {
-                    
-                    *cache_type_k = Some(ct);
-                    return self.llama_command();
-                }
-            } 
-            Message::AiCacheTypeVChanged(ct) => {
-                if let Some(c) = self.get_ai_config_mut() 
-                    && c.provider == crate::config::Provider::LlamaCpp
-                    && let Some(crate::config::LlamaType::Local { cache_type_v, .. }) = c.llama_type.as_mut() {
-                    
-                    *cache_type_v = Some(ct);
-                    return self.llama_command();
-                }
-            }
-            Message::AiFlashAttnChanged(fl) => {
-                if let Some(c) = self.get_ai_config_mut() 
-                    && c.provider == crate::config::Provider::LlamaCpp
-                    && let Some(crate::config::LlamaType::Local { flash_attn, .. }) = c.llama_type.as_mut() {
-                    
-                    *flash_attn = Some(fl);
-                    return self.llama_command();
-                }
-            }
             Message::AiCancelPrompt => {
                 if let Some(a) = self.cts.clone() {
                     return iced::Task::perform(async move {
                         a.send(CancellationToken).await
                     }, |_| Message::Void);
-                }
-            }
-            Message::AiNCpuMoeChanged(nc) => {
-                if nc.is_empty() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { 
-                        n_cpu_moe, 
-                            ..}) = c.llama_type.as_mut() {
-                        *n_cpu_moe = None;
-                        return self.llama_command();
-                    }
-                }
-                else if let Ok(r) = nc.parse::<u16>() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { 
-                            n_cpu_moe, 
-                            ..}) = c.llama_type.as_mut() {
-                        *n_cpu_moe = Some(r);
-                        return self.llama_command();
-                    }
-                }
-
-            }
-            Message::AiReasoningBudgetChanged(reb) => {
-                if reb.is_empty() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { 
-                            reasoning_budget, 
-                            ..}) = c.llama_type.as_mut() {
-                        *reasoning_budget = None;
-                        return self.llama_command();
-                    }
-                }
-                else if let Ok(r) = reb.parse::<u32>() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { 
-                            reasoning_budget, 
-                            ..}) = c.llama_type.as_mut() {
-                        *reasoning_budget = Some(r);
-                        return self.llama_command();
-                    }
-                }
-            }
-            Message::AiPortChanged(port) => {
-                if port.is_empty() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { 
-                            port, 
-                            ..}) = c.llama_type.as_mut() {
-                        *port = None;
-                        return self.llama_command();
-                    }
-                }
-                else if let Ok(r) = port.parse::<u16>() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { 
-                            port, 
-                            ..}) = c.llama_type.as_mut() {
-                        *port = Some(r);
-                        return self.llama_command();
-                    }
-                }
-            }
-            Message::AiPresencePenaltyChanged(pp) => {
-                if pp.is_empty() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { presence_penalty, ..}) = c.llama_type.as_mut() {
-                        *presence_penalty = None;
-                        return self.llama_command();
-                    }
-                }
-                else if let Ok(_r) = pp.parse::<f32>() {
-                    if let Some(c) = self.get_ai_config_mut()
-                        && c.provider == crate::config::Provider::LlamaCpp 
-                        && let Some(crate::config::LlamaType::Local { presence_penalty, ..}) = c.llama_type.as_mut() {
-                        *presence_penalty = Some(pp);
-                        return self.llama_command();
-                    }
-                } else if pp.ends_with(".") 
-                    && let Ok(_r) = pp.replace(".","").parse::<f32>()
-                    &&let Some(c) = self.get_ai_config_mut()
-                    && let Some(crate::config::LlamaType::Local { presence_penalty, ..}) = c.llama_type.as_mut() {
-                        *presence_penalty = Some(pp);
-                        return self.llama_command();
-                }
-            }
-            Message::AiLlamaEvent(event) => {
-                match event {
-                    LlamaEvent::SipperStarted(sender) => {
-                        self.l_sender = Some(sender.clone());
-                        let sender = sender.clone();
-                        if let Some(c) = self.get_ai_config_mut() 
-                            && c.provider == crate::config::Provider::LlamaCpp {
-                            let url = c.url.clone().unwrap_or_default();
-                            let ltype = c.llama_type.clone();
-                            let model_path = c.model.clone();
-                            let command: LlamaCommand = ltype.unwrap_or(crate::config::LlamaType::None).into();
-                            let command = command.url(&url).model_path(&model_path);
-                            return sender_send!(sender, command, Message::Void);
-                        }
-
-                    }
-                    LlamaEvent::LocalFoundNotResponding => {
-                        self.llama_state = String::from("🟥");
-                    }
-                    LlamaEvent::Running => {
-                        self.llama_state = String::from("🟩");
-                    }
-                    LlamaEvent::NoLocalFound => {
-                        self.llama_state = String::from("⬛️");
-                    }
-                    LlamaEvent::Error(e) => {
-                        return iced::Task::done(Message::ShowModal(e));
-                    }
-                    LlamaEvent::LocalFoundNotRunning => {
-                        self.llama_state = String::from("⬜️");
-                    }
-                    LlamaEvent::LocalFoundRunning => {
-                        self.llama_state = String::from("🟦");
-                    }
-                }
-            }
-            Message::AiLlamaToggle => {
-                if let Some(sender) = self.l_sender.clone() {
-                    match self.llama_state.as_str() {
-                        "🟩" | "🟥" => {
-                            debug!("Sending stop");
-                            return sender_send!(sender, LlamaCommand::Stop, Message::Void);
-                        }
-                        "⬜️" => {
-                            debug!("Sending start");
-                            return sender_send!(sender, LlamaCommand::Start, Message::Void);
-                        }
-                        _ => {
-                            info!("Toggle no toggle");
-                        }
-                    }
                 }
             }
             Message::NotesExport => {
@@ -1488,28 +1309,11 @@ impl App {
         iced::Task::none()
     }
 
-    fn llama_command(&mut self) -> iced::Task<Message> {
-        let sender = self.l_sender.clone();
-        if let Some(c) = self.get_ai_config_mut() 
-            && let Some(sender) = sender
-            && c.provider == crate::config::Provider::LlamaCpp {
-            let url = c.url.clone().unwrap_or_default();
-            let ltype = c.llama_type.clone();
-            let model_path = c.model.clone();
-            let command: LlamaCommand = ltype.unwrap_or(crate::config::LlamaType::None).into();
-            let command = command.url(&url).model_path(&model_path);
-            debug!("llama_command: {:?}", command);
-            return sender_send!(sender, command, Message::Void);
-            } else {
-            iced::Task::done(Message::Void)
-        }
-    }
-
     fn do_prompt(&mut self, question: &str, with_text: bool) -> iced::Task<Message> {
         if self.text.selection().is_some() || self.image_include {
             if let Some(sender) = self.sender.clone() {
                 let selection = self.text.selection().unwrap_or_default();
-                let question = question.replace("{}", selection.as_str());
+                let question = question.replace("@sel", selection.as_str());
                 let prompt = rig::message::Text::from(question.as_str());
                 let line = self.text.cursor().position.line;
                 let text_line = self.text.text();
