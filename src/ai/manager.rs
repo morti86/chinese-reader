@@ -27,10 +27,10 @@ macro_rules! stream_prompt {
             while let Some(r) = r.next().await {
                 match r {
                     Ok(chunk) => {
-                        tracing::debug!("Received message");
+                        tracing::trace!("Received message");
                         match chunk {
                             rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::Text(text)) => {
-                                tracing::debug!("text=[{:?}]", text);
+                                tracing::trace!("text=[{:?}]", text);
                                 $o.send(ChatEvent::Text(text.text)).await;
                             },
                             rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::ToolCall{ tool_call, .. }) => {
@@ -40,10 +40,10 @@ macro_rules! stream_prompt {
                                 tracing::debug!("tool call delta: {:?}", content);
                             }
                             rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::Reasoning(re)) => {
-                                tracing::debug!("Reasoning: {:?}", re);
+                                tracing::trace!("Reasoning: {:?}", re);
                             }
                             rig::agent::MultiTurnStreamItem::<$m>::StreamAssistantItem(StreamedAssistantContent::ReasoningDelta{ reasoning, .. }) => {
-                                tracing::debug!("Reasoning delta: {:?}", reasoning);
+                                tracing::trace!("Reasoning delta: {:?}", reasoning);
                             }
                             _ => $o.send(ChatEvent::Final).await,
                         }

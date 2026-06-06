@@ -80,10 +80,10 @@ sc.warn: A ferramenta de raspagem é usada para baixar automaticamente livros di
   portanto, use-a com cuidado. Diminuir o intervalo de download torna a ferramenta mais rápida, mas também aumenta o risco de ser banido.
 p_meaning: Explicar significado e uso
 p_explain: Explicar (com contexto)
-prompt_meaning: Explicar o significado e uso da palavra {}
+prompt_meaning: Explicar o significado e uso da palavra @sel
 prompt_examples: Dar exemplos de uso da palavra em frases
-prompt_explain: Explicar o significado de {} no texto dado
-prompt_grammar: Explicar a estrutura gramatical da frase {}
+prompt_explain: Explicar o significado de @sel no texto dado
+prompt_grammar: Explicar a estrutura gramatical da frase @sel
 prompt_summary: Resumir o texto anexado
 prompt_translate: Traduzir {} para português
 ai_translate: Traduzir

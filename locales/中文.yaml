@@ -78,12 +78,12 @@ text: 文本
 sc_warn: 爬虫是用于自动下载分章节的整本书的工具。网站不喜欢爬虫，并倾向于禁止使用爬虫的用户，因此请谨慎使用。减少间隔会使爬虫更快，但也更可能使您被禁止。
 p_meaning: 解释含义和用法
 p_explain: 解释（带上下文）
-prompt_meaning: 解释单词{}的含义和用法
+prompt_meaning: 解释单词@sel的含义和用法
 prompt_examples: 给出一些包含该单词的句子使用示例
-prompt_explain: 解释给定文本中{}的含义
-prompt_grammar: 解释句子{}的语法结构
+prompt_explain: 解释给定文本中@sel的含义
+prompt_grammar: 解释句子@sel的语法结构
 prompt_summary: 总结附加文本
-prompt_translate: 翻译{}到中文
+prompt_translate: 翻译@sel到中文
 ai_translate: 翻译
 append: 追加
 replace: 替换

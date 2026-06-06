@@ -78,12 +78,12 @@ text: テキスト
 sc_warn: スクレイパーは章に分かれた本全体を自動的にダウンロードするためのツールです。ウェブサイトはスクレイパーを好まず、使用するユーザーを禁止する傾向がありますので、注意して使用してください。間隔を短くするとスクレイパーは速くなりますが、禁止される可能性も高くなります。
 p_meaning: 意味と使い方を説明
 p_explain: 説明（文脈付き）
-prompt_meaning: 単語{}の意味と使い方を説明してください
+prompt_meaning: 単語@selの意味と使い方を説明してください
 prompt_examples: 単語を使った文の使用例をいくつか挙げてください
-prompt_explain: 与えられたテキストにおける{}の意味を説明してください
-prompt_grammar: 文{}の文法構造を説明してください
+prompt_explain: 与えられたテキストにおける@selの意味を説明してください
+prompt_grammar: 文@selの文法構造を説明してください
 prompt_summary: 添付されたテキストを要約してください
-prompt_translate: '{} を日本語に翻訳'
+prompt_translate: '@sel を日本語に翻訳'
 ai_translate: 翻訳
 append: 追加
 replace: 置換

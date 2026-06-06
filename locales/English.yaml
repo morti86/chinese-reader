@@ -82,12 +82,12 @@ sc_warn: Scraper is a tool for automatic downloading of entire books that are di
   also more likely to get you banned.
 p_meaning: Explain meaning and usage
 p_explain: Explain (with context)
-prompt_meaning: Explain the meaning and the usage of the word {}
+prompt_meaning: Explain the meaning and the usage of the word @sel
 prompt_examples: Give some usage examples of sentences with the word
-prompt_explain: Explain the meaning of {} in the given text
-prompt_grammar: Explain the grammatical structure of the sentence {}
+prompt_explain: Explain the meaning of @sel in the given text
+prompt_grammar: Explain the grammatical structure of the sentence @sel
 prompt_summary: Summarize the attached text
-prompt_translate: Translate {} to English
+prompt_translate: Translate @sel to English
 ai_translate: Translate
 append: append
 replace: replace

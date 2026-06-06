@@ -18,7 +18,7 @@ use tokio::sync::RwLock;
 use tokio::sync::mpsc::Sender;
 use crate::textbase::{*, Document as Doc};
 use crate::utils::{find_config_path, get_image, str_to_op, url_for_provider};
-use tracing::{debug, error, info, warn};
+use tracing::{debug, error, info, trace, warn};
 use std::path::PathBuf;
 use std::sync::Arc;
 use message::Message;
@@ -85,23 +85,25 @@ macro_rules! paste {
     };
     ($editor:expr, $value:expr, $append:expr) => {
         if $append {
+            $editor.perform(text_editor::Action::Move(text_editor::Motion::End));
             $editor.perform(text_editor::Action::Edit( text_editor::Edit::Paste( Arc::new($value) ) ));
         } else {
             $editor = text_editor::Content::new();
+            $editor.perform(text_editor::Action::Edit( text_editor::Edit::Paste( Arc::new($value) ) ));
         }
     };
 
 }
 
-fn ac_to_str(ac: &AssistantContent) -> String {
+fn ac_to_str(ac: &AssistantContent) -> &str {
     match ac {
-        AssistantContent::Text(text) => text.text.clone(),
+        AssistantContent::Text(text) => text.text.as_str(),
         AssistantContent::Image(_img) => {
             info!("AC Image!");
-            String::new()
+            ""
         }
-        AssistantContent::ToolCall(tc) => format!("\n{}", tc.id),
-        AssistantContent::Reasoning(_) => String::new(),
+        AssistantContent::ToolCall(_tc) => "tc",
+        AssistantContent::Reasoning(_) => "",
     }
 }
 
@@ -113,6 +115,7 @@ fn message_to_str(msg: &Rmsg) -> String {
         },
         Rmsg::System { content } => format!("system: {}\n", content),
         Rmsg::Assistant { content, .. } => {
+            debug!("Msg Content: {:?}", content);
             content.iter().fold(String::new(), 
                 |acc,e| format!("{}\n{}", acc, ac_to_str(e)))
         }
@@ -288,7 +291,6 @@ impl App {
                 }
             }
         }
-
         rust_i18n::set_locale(&conf.window.lang().to_string());
         let appdata = conf.db.clone().unwrap_or("appdata.db".to_string());
 
@@ -654,7 +656,7 @@ impl App {
                     debug!("Found note");
                     self.sidebar_notes = text_editor::Content::with_text(note.text.as_str());
                 } else {
-                    debug!("No note");
+                    trace!("No note");
                     //debug!("Notes: {:?}", self.notes);
                     //self.sidebar_notes = text_editor::Content::new();
                 }
@@ -821,25 +823,28 @@ impl App {
                     ChatEvent::Final => {
                         debug!("Received final message from stream");
                         let answer_ix = self.chat_history.len();
-                        let answer_footer = format!("\n[{}](B:{answer_ix}) [{}](C:{answer_ix})\n", t!("append"), t!("replace"));
-                        self.answer_text.push_str(&answer_footer);
-                        self.answer_raw.push_str("\n");
-
-                        self.chat_history.push(Rmsg::Assistant 
+                        let answer_footer = format!("\n[{}](B:{answer_ix}) [{}](C:{answer_ix}) [{}](N:{answer_ix})\n", t!("append"), t!("replace"), t!("to_notes"));
+                        debug!("footer: {}", answer_footer);
+                        debug!("answer_t: {}", self.answer_t );
+                        if !self.answer_t.is_empty() {
+                            self.answer_text.push_str(&answer_footer);
+                            self.answer_raw.push_str("\n");
+                            let answer_t = std::mem::take(&mut self.answer_t);
+                            self.chat_history.push(Rmsg::Assistant 
                             { 
                                 id: Some(String::from("**agent**")),
-                                content: OneOrMany::one(rig::message::AssistantContent::Text(rig::agent::Text::from(self.answer_t.clone()))) 
+                                content: OneOrMany::one(rig::message::AssistantContent::Text(rig::agent::Text::from(answer_t))) 
                             });
-                        self.answer_t.clear();
+                        }
                     }
                     ChatEvent::ToolCall { id, function, args } => {
                         debug!("ToolCall: {}/{}: {}", id, function, args);
                     }
                     ChatEvent::Reasoning(re) => {
-                        debug!("Reasoning: {:?}", re);
+                        trace!("Reasoning: {:?}", re);
                     }
                     ChatEvent::ReasoningDelta(d) => { 
-                        debug!("Reasoning delta: {}", d);
+                        trace!("Reasoning delta: {}", d);
                     }
                     ChatEvent::ToolCallDelta(tc) => {
                         debug!("ToolCallDelta: {:?}", tc);
@@ -1120,10 +1125,18 @@ impl App {
                     let msg_index = &e[2..];
                     if let Ok(msg_index) = msg_index.parse::<usize>() 
                         && let Some(msg) = self.chat_history.iter().nth(msg_index) {
-                        paste!(self.text, message_to_str(msg), append);
+
+                        let msg = message_to_str(msg);
+                        debug!("Paste {}", msg);
+                        paste!(self.text, msg, append);
                     }
-                    
-                    debug!("Copy chat clicked");
+                } else if e.starts_with("N:")
+                    && let Ok(msg_index) = e[2..].parse::<usize>()
+                    && let Some(msg) = self.chat_history.iter().nth(msg_index) {
+                    trace!("Paste[{}] {:?}", msg_index, msg);
+                    let msg = message_to_str(msg);
+                    paste!(self.sidebar_notes, msg, self.dtn_append);
+
                 } else {
                     #[cfg(target_os = "linux")]
                     if let Err(e) = std::process::Command::new("xdg-open").arg(e.to_string()).output() {

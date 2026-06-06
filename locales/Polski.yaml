@@ -81,10 +81,10 @@ sc_warn: Scraper to narzędzie do automatycznego pobierania całych książek, k
   szybszy, ale zwiększa ryzyko bana.
 p_meaning: Wytłumacz znaczenie i użycie
 p_explain: Wyjaśnij (z kontekstem)
-prompt_meaning: 'Wyjaśnij znaczenie i użycie słowa: {}'
+prompt_meaning: 'Wyjaśnij znaczenie i użycie słowa: @sel'
 prompt_examples: Podaj kilka przykładów użycia słowa
-prompt_explain: Wyjaśnij znaczenie {} w podanym tekście
-prompt_grammar: Wyjaśnij strukturę gramatyczną zdania {}
+prompt_explain: Wyjaśnij znaczenie @sel w podanym tekście
+prompt_grammar: Wyjaśnij strukturę gramatyczną zdania @sel
 prompt_summary: Napisz podsumowanie załączonego tekstu
-prompt_translate: Przetłumacz {} na język polski
+prompt_translate: Przetłumacz @sel na język polski
 ai_translate: Przetłumacz

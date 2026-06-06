@@ -82,12 +82,12 @@ sc_warn: Le scraper est un outil pour télécharger automatiquement des livres e
   rend le scraper plus rapide, mais augmente également la probabilité d'être banni.
 p_meaning: Expliquer la signification et l'utilisation
 p_explain: Expliquer (avec contexte)
-prompt_meaning: Expliquez la signification et l'utilisation du mot {}
+prompt_meaning: Expliquez la signification et l'utilisation du mot @sel
 prompt_examples: Donnez quelques exemples d'utilisation de phrases avec le mot
-prompt_explain: Expliquez la signification de {} dans le texte donné
-prompt_grammar: Expliquez la structure grammaticale de la phrase {}
+prompt_explain: Expliquez la signification de @sel dans le texte donné
+prompt_grammar: Expliquez la structure grammaticale de la phrase @sel
 prompt_summary: Résumez le texte joint
-prompt_translate : Traduire {} en français
+prompt_translate : Traduire @sel en français
 ai_translate: Traduire
 append: ajouter
 replace: remplacer

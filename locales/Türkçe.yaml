@@ -82,12 +82,12 @@ sc_warn: Kazıyıcı, bölümlere ayrılmış tüm kitapları otomatik olarak in
   yasaklanma olasılığını da artırır.
 p_meaning: Anlamı ve kullanımını açıkla
 p_explain: Açıkla (bağlamla)
-prompt_meaning: '{} kelimesinin anlamını ve kullanımını açıkla'
+prompt_meaning: '@sel kelimesinin anlamını ve kullanımını açıkla'
 prompt_examples: Kelime ile cümlelerin kullanım örnekleri ver
-prompt_explain: Verilen metindeki {} anlamını açıkla
-prompt_grammar: '{} cümlesinin dilbilgisi yapısını açıkla'
+prompt_explain: Verilen metindeki @sel anlamını açıkla
+prompt_grammar: '@sel cümlesinin dilbilgisi yapısını açıkla'
 prompt_summary: Ekli metni özetle
-prompt_translate: '{} yi Türkçeye çevir'
+prompt_translate: '@sel yi Türkçeye çevir'
 ai_translate: çevir
 append: ekle
 replace: değiştir

@@ -83,12 +83,12 @@ sc_warn: Scraper ist ein Werkzeug zum automatischen Herunterladen ganzer Bücher
   gesperrt zu werden.
 p_meaning: Bedeutung und Verwendung erklären
 p_explain: Erklären (mit Kontext)
-prompt_meaning: Erklären Sie die Bedeutung und Verwendung des Wortes {}
+prompt_meaning: Erklären Sie die Bedeutung und Verwendung des Wortes @sel
 prompt_examples: Geben Sie einige Anwendungsbeispiele von Sätzen mit dem Wort
-prompt_explain: Erklären Sie die Bedeutung von {} im gegebenen Text
-prompt_grammar: Erklären Sie die grammatikalische Struktur des Satzes {}
+prompt_explain: Erklären Sie die Bedeutung von @sel im gegebenen Text
+prompt_grammar: Erklären Sie die grammatikalische Struktur des Satzes @sel
 prompt_summary: Fassen Sie den angehängten Text zusammen
-prompt_translate: Übersetze {} ins Deutsche
+prompt_translate: Übersetze @sel ins Deutsche
 ai_translate: Übersetzen
 append: anhängen
 replace: ersetzen
